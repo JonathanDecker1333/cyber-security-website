@@ -1,0 +1,49 @@
+services:
+  app:
+    build: .
+    environment:
+      APP_ORIGIN: https://${DOMAIN:?Set DOMAIN in .env}
+      HOST: 0.0.0.0
+      NODE_ENV: production
+      PORT: 4173
+      SETUP_TOKEN: ${SETUP_TOKEN:-}
+    expose:
+      - "4173"
+    volumes:
+      - salone_data:/app/data
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  caddy:
+    image: caddy:2
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+
+volumes:
+  salone_data:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,1524 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<meta name="theme-color" content="#f6f5ef">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="default">
+	<title>Salone Register — Student Enrollment</title>
+	<link rel="manifest" href="/manifest.webmanifest">
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+	<style>
+		:root {
+			color-scheme: light;
+			--paper: #f6f5ef;
+			--white: #fffefa;
+			--ink: #252b26;
+			--muted: #777d74;
+			--line: #e8e7df;
+			--green: #315b49;
+			--green-soft: #e8f0e8;
+			--coral: #d76c50;
+			--gold: #dfa942;
+			--shadow: 0 14px 42px rgb(35 45 36 / 7%);
+		}
+
+		* { box-sizing: border-box; }
+		body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.5 "DM Sans", sans-serif; }
+		button, input, textarea { font: inherit; }
+		button { color: inherit; }
+		.topbar { height: 68px; background: var(--white); border-bottom: 1px solid var(--line); display: flex; align-items: center; position: sticky; top: 0; z-index: 5; }
+		.topbar-inner { width: min(1240px, calc(100% - 48px)); margin: auto; display: flex; align-items: center; gap: 38px; }
+		.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); flex-shrink: 0; }
+		.brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; color: white; background: var(--green); font: 800 16px Manrope, sans-serif; }
+		.brand-name { font: 800 17px Manrope, sans-serif; letter-spacing: -.4px; }
+		.brand-school { color: var(--muted); font-size: 11px; margin-top: -3px; }
+		.search { position: relative; width: min(360px, 38vw); }
+		.search input { width: 100%; height: 38px; padding: 0 14px 0 38px; border: 1px solid var(--line); background: #f8f8f4; border-radius: 8px; outline: none; }
+		.search input:focus { border-color: #a7bba9; box-shadow: 0 0 0 3px rgb(49 91 73 / 9%); }
+		.search svg { position: absolute; top: 11px; left: 12px; color: var(--muted); }
+		.top-spacer { flex: 1; }
+		.icon-button { width: 38px; height: 38px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; cursor: pointer; position: relative; }
+		.icon-button:hover { background: var(--paper); }
+		.notice-dot { position: absolute; right: 7px; top: 7px; width: 7px; height: 7px; background: var(--coral); border: 1px solid white; border-radius: 50%; }
+		.profile { display: flex; align-items: center; gap: 9px; font-weight: 600; }
+		.avatar { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; background: #f1d8bb; color: #6e4327; font: 700 12px Manrope, sans-serif; }
+		.avatar.mint { background: #d7e9dd; color: #315b49; }
+		.avatar.lilac { background: #e6dfef; color: #64537c; }
+		.avatar.blue { background: #dce7ed; color: #476777; }
+		.avatar.gold { background: #f3e7bd; color: #75612e; }
+
+		.layout { width: min(1240px, calc(100% - 48px)); margin: 30px auto 64px; display: grid; grid-template-columns: 218px minmax(0, 640px) 280px; gap: 28px; align-items: start; }
+		.left-rail { position: sticky; top: 92px; }
+		.school-switch { padding: 14px 12px; display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--white); margin-bottom: 24px; }
+		.school-crest { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; color: var(--green); background: #edf1df; }
+		.school-title { font-weight: 700; font-size: 12px; }
+		.school-subtitle { font-size: 11px; color: var(--muted); }
+		.rail-label { margin: 0 0 9px 11px; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+		.nav-list { display: grid; gap: 3px; }
+		.nav-item { display: flex; align-items: center; gap: 11px; width: 100%; padding: 10px 11px; border: 0; border-radius: 7px; background: transparent; text-align: left; cursor: pointer; color: #51574f; font-weight: 500; }
+		.nav-item:hover { background: #eeeee7; }
+		.nav-item.active { color: var(--green); background: #e9eee6; font-weight: 700; }
+		.nav-item svg { flex-shrink: 0; }
+		.nav-count { margin-left: auto; font-size: 11px; color: var(--muted); }
+		.rail-divider { height: 1px; background: var(--line); margin: 20px 0; }
+		.rail-foot { color: var(--muted); font-size: 11px; line-height: 1.8; padding-left: 11px; }
+
+		.feed-head { display: flex; align-items: end; justify-content: space-between; margin: 3px 0 18px; }
+		.eyebrow { color: var(--coral); font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; }
+		h1 { margin: 3px 0 0; font: 800 27px/1.2 Manrope, sans-serif; letter-spacing: -.8px; }
+		.feed-date { color: var(--muted); font-size: 12px; }
+		.composer { display: flex; align-items: center; gap: 12px; padding: 13px; background: var(--white); border: 1px solid var(--line); border-radius: 9px; margin-bottom: 17px; }
+		.composer-prompt { flex: 1; min-width: 0; height: 40px; border: 1px solid var(--line); border-radius: 7px; background: #fafaf7; color: #8b9088; text-align: left; padding: 0 13px; cursor: pointer; }
+		.composer-prompt:hover { border-color: #b4c3b2; color: var(--green); }
+		.primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 38px; padding: 0 14px; border: 0; border-radius: 7px; color: white; background: var(--green); font-weight: 700; font-size: 12px; cursor: pointer; transition: background .15s, transform .15s; }
+		.primary-button:hover { background: #254c3a; transform: translateY(-1px); }
+		.feed-tools { display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 11px; }
+		.feed-tools strong { font: 700 13px Manrope, sans-serif; }
+		.sort-select { border: 0; background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; outline: none; }
+		.post-list { display: grid; gap: 11px; }
+		.post { padding: 17px 18px 13px; background: var(--white); border: 1px solid var(--line); border-radius: 9px; transition: border-color .15s; }
+		.post:hover { border-color: #d4d9ce; }
+		.post-meta { display: flex; align-items: center; gap: 9px; }
+		.post-author { font-size: 12px; font-weight: 700; }
+		.post-role { color: var(--muted); font-size: 11px; }
+		.post-time { color: #969990; font-size: 11px; margin-left: auto; white-space: nowrap; }
+		.category-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 20px; background: #eef1e9; color: #52674d; font-size: 10px; font-weight: 700; }
+		.category-tag[data-category="Clubs"] { background: #f5ebe1; color: #9a6136; }
+		.category-tag[data-category="Questions"] { background: #e9edf4; color: #576a88; }
+		.category-tag[data-category="Lost & Found"] { background: #f6e9e4; color: #a45c48; }
+		.category-tag[data-category="Announcements"] { background: #f4efdb; color: #8b7131; }
+		.post-title { margin: 13px 0 5px; font: 700 15px/1.4 Manrope, sans-serif; letter-spacing: -.15px; }
+		.post-body { margin: 0; color: #5f655d; line-height: 1.65; font-size: 12.5px; }
+		.post-actions { display: flex; gap: 17px; margin-top: 14px; padding-top: 11px; border-top: 1px solid #f0efe9; }
+		.action-button { display: inline-flex; align-items: center; gap: 6px; border: 0; padding: 2px 0; color: #777d74; background: transparent; cursor: pointer; font-size: 11px; }
+		.action-button:hover, .action-button.liked { color: var(--coral); }
+		.action-button.liked svg { fill: #f2d8cf; }
+		.comments { display: grid; gap: 10px; margin-top: 13px; padding: 12px 0 0 12px; border-top: 1px solid #f0efe9; }
+		.comment { display: flex; align-items: start; gap: 8px; color: #62685f; font-size: 11px; }
+		.comment .avatar { width: 24px; height: 24px; font-size: 9px; }
+		.comment strong { color: var(--ink); }
+		.comment-form { display: flex; gap: 8px; margin-top: 12px; }
+		.comment-form input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; outline: none; font-size: 11px; }
+		.comment-form input:focus { border-color: #a7bba9; }
+		.comment-form button { border: 0; color: var(--green); background: transparent; font-size: 11px; font-weight: 700; cursor: pointer; }
+		.empty-state { padding: 42px 18px; background: var(--white); border: 1px solid var(--line); border-radius: 9px; color: var(--muted); text-align: center; }
+
+		.right-rail { position: sticky; top: 92px; display: grid; gap: 14px; }
+		.side-card { overflow: hidden; background: var(--white); border: 1px solid var(--line); border-radius: 9px; }
+		.side-card-content { padding: 15px; }
+		.side-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+		.side-heading h2 { margin: 0; font: 700 13px Manrope, sans-serif; }
+		.text-link { color: var(--green); text-decoration: none; font-size: 10px; font-weight: 700; }
+		.text-link:hover { text-decoration: underline; }
+		.event { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid #f0efe9; }
+		.event-date { width: 38px; flex-shrink: 0; text-align: center; color: var(--coral); font: 800 9px Manrope, sans-serif; text-transform: uppercase; }
+		.event-date b { display: block; color: var(--ink); font-size: 16px; }
+		.event-name { font-size: 11px; font-weight: 700; }
+		.event-time { color: var(--muted); font-size: 10px; }
+		.feature-photo { height: 126px; background: #dce7dd url("https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80") center 45% / cover; }
+		.feature-label { color: var(--coral); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+		.feature-title { margin: 4px 0; font: 700 13px/1.4 Manrope, sans-serif; }
+		.feature-copy { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+		.member-list { display: grid; gap: 12px; }
+		.member { display: flex; align-items: center; gap: 9px; font-size: 11px; font-weight: 600; }
+		.member small { display: block; color: var(--muted); font-size: 10px; font-weight: 400; }
+		.member .avatar { width: 29px; height: 29px; font-size: 10px; }
+
+		.modal-backdrop { position: fixed; inset: 0; z-index: 10; display: none; place-items: center; padding: 20px; background: rgb(23 31 25 / 38%); }
+		.modal-backdrop.open { display: grid; }
+		.modal { width: min(500px, 100%); background: var(--white); border-radius: 10px; box-shadow: var(--shadow); animation: rise .18s ease-out; }
+		@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+		.modal-head { display: flex; align-items: center; justify-content: space-between; padding: 17px 20px; border-bottom: 1px solid var(--line); }
+		.modal-head h2 { margin: 0; font: 700 16px Manrope, sans-serif; }
+		.close-button { width: 30px; height: 30px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 20px; cursor: pointer; }
+		.close-button:hover { background: var(--paper); }
+		.post-form { display: grid; gap: 12px; padding: 19px 20px 20px; }
+		.post-form label { display: grid; gap: 6px; font-size: 11px; font-weight: 700; }
+		.post-form input, .post-form textarea, .post-form select { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 10px 11px; outline: none; background: white; font-size: 12px; }
+		.post-form input:focus, .post-form textarea:focus, .post-form select:focus { border-color: #a7bba9; }
+		.post-form textarea { min-height: 110px; resize: vertical; }
+		.post-form .primary-button { justify-self: end; margin-top: 3px; }
+
+		@media (max-width: 1050px) {
+			.layout { grid-template-columns: 190px minmax(0, 1fr); gap: 22px; }
+			.right-rail { display: none; }
+			.topbar-inner, .layout { width: min(900px, calc(100% - 36px)); }
+		}
+		@media (max-width: 680px) {
+			.topbar { height: 60px; }
+			.topbar-inner { width: calc(100% - 28px); gap: 12px; }
+			.brand-school, .profile-name, .topbar .icon-button { display: none; }
+			.search { width: auto; flex: 1; }
+			.layout { display: block; width: calc(100% - 28px); margin-top: 23px; }
+			.left-rail { position: static; margin-bottom: 21px; }
+			.school-switch, .rail-label, .rail-divider, .rail-foot { display: none; }
+			.nav-list { display: flex; overflow-x: auto; gap: 5px; padding-bottom: 2px; }
+			.nav-item { width: auto; flex: 0 0 auto; gap: 7px; padding: 8px 10px; border: 1px solid transparent; font-size: 11px; }
+			.nav-item.active { border-color: #dbe3d8; }
+			.nav-item svg { width: 15px; height: 15px; }
+			.nav-count { display: none; }
+			.feed-head { margin-top: 0; }
+			h1 { font-size: 24px; }
+			.feed-date { font-size: 10px; }
+			.composer { padding: 10px; gap: 8px; }
+			.composer .avatar { width: 30px; height: 30px; }
+			.composer-prompt { height: 38px; padding: 0 9px; font-size: 11px; }
+			.composer .primary-button { width: 38px; min-width: 38px; padding: 0; font-size: 0; }
+			.post { padding: 14px 13px 11px; }
+			.post-title { font-size: 14px; }
+			.post-body { font-size: 12px; }
+		}
+
+		:root {
+			--paper: #f3f6f3;
+			--white: #fff;
+			--ink: #1d2c25;
+			--muted: #69766f;
+			--line: #e1e9e3;
+			--green: #176644;
+			--green-soft: #e8f3ec;
+			--coral: #df704d;
+			--gold: #dfa942;
+			--blue: #3265a8;
+		}
+		body { background: var(--paper); color: var(--ink); font-family: "DM Sans", sans-serif; }
+		.enroll-topbar { height: 70px; border-bottom: 1px solid var(--line); background: var(--white); }
+		.enroll-topbar-inner, .enroll-main { width: min(1160px, calc(100% - 48px)); margin: auto; }
+		.enroll-topbar-inner { height: 100%; display: flex; align-items: center; justify-content: space-between; }
+		.enroll-brand { display: flex; align-items: center; gap: 11px; }
+		.enroll-logo { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 9px; color: white; background: var(--green); font: 800 16px Manrope, sans-serif; }
+		.enroll-brand-name { display: block; font: 800 16px Manrope, sans-serif; }
+		.enroll-brand-sub { display: block; color: var(--muted); font-size: 10px; letter-spacing: .8px; }
+		.school-label { display: flex; align-items: center; gap: 8px; color: #42564a; font-size: 12px; font-weight: 600; }
+		.school-label svg { color: var(--green); }
+		.school-config { display: flex; align-items: center; gap: 8px; color: #526158; font-size: 10px; font-weight: 700; }
+		.school-config input { width: 190px; height: 35px; padding: 0 9px; border: 1px solid var(--line); border-radius: 5px; outline: none; font-size: 11px; }
+		.school-config input:focus { border-color: #5d9974; box-shadow: 0 0 0 3px rgb(23 102 68 / 9%); }
+		.status-pill { display: inline-flex; align-items: center; justify-content: center; min-height: 28px; padding: 0 10px; border: 1px solid #d7e8dc; border-radius: 999px; background: #edf9f0; color: #245a43; font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; }
+		.status-pill.status-offline { border-color: #f1d7cf; background: #fff2ee; color: #9d4e38; }
+		.reconnect-banner { display: none; margin: 0 auto 12px; width: min(1160px, calc(100% - 48px)); padding: 10px 14px; border: 1px solid #f1d7cf; border-radius: 8px; background: #fff4ef; color: #8c4a3a; font-size: 11px; font-weight: 600; }
+		.reconnect-banner.visible { display: block; }
+		.assistant-fab { position: fixed; right: 18px; bottom: 18px; z-index: 25; display: inline-flex; align-items: center; justify-content: center; width: 54px; height: 54px; border: 0; border-radius: 50%; background: var(--green); color: white; box-shadow: 0 15px 28px rgb(23 102 68 / 20%); font: 800 13px Manrope, sans-serif; cursor: pointer; }
+		.assistant-panel { position: fixed; right: 18px; bottom: 84px; z-index: 24; width: min(360px, calc(100vw - 28px)); background: var(--white); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 16px 42px rgb(18 33 28 / 12%); overflow: hidden; }
+		.assistant-panel[hidden] { display: none; }
+		.assistant-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 15px; background: linear-gradient(135deg, #eaf4ee, #f8fbf8); border-bottom: 1px solid var(--line); }
+		.assistant-brand { display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 700; }
+		.assistant-badge { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 7px; background: var(--green); color: white; font-size: 10px; }
+		.assistant-close { width: 28px; height: 28px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; }
+		.assistant-close:hover { background: #eef3ef; }
+		.assistant-messages { display: grid; gap: 9px; max-height: 260px; overflow: auto; padding: 14px 15px 10px; background: #fbfbf8; }
+		.assistant-message { max-width: 90%; padding: 9px 11px; border-radius: 12px; font-size: 11px; line-height: 1.5; }
+		.assistant-message.user { margin-left: auto; background: #e7f0ea; color: var(--ink); border-bottom-right-radius: 4px; }
+		.assistant-message.bot { background: #f2f2ee; color: #3f4a42; border-bottom-left-radius: 4px; }
+		.assistant-suggestions { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 15px 12px; }
+		.assistant-suggestion { border: 1px solid #dfe7df; border-radius: 999px; padding: 7px 10px; background: white; color: var(--green); font-size: 10px; font-weight: 700; cursor: pointer; }
+		.assistant-form { display: flex; gap: 8px; padding: 0 15px 15px; }
+		.assistant-form input { flex: 1; min-width: 0; height: 36px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; outline: none; font-size: 11px; }
+		.assistant-form input:focus { border-color: #8da996; box-shadow: 0 0 0 3px rgb(23 102 68 / 9%); }
+		.assistant-form button { min-width: 68px; border: 0; border-radius: 8px; background: var(--green); color: white; font-size: 11px; font-weight: 700; cursor: pointer; }
+		.school-logo-preview { width: 34px; height: 34px; object-fit: contain; border: 1px solid var(--line); border-radius: 5px; background: white; }
+		.school-logo-button { width: 34px; min-width: 34px; padding: 0; }
+		.school-logo-button svg { width: 16px; height: 16px; }
+		.enroll-main { padding: 33px 0 58px; }
+		.page-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 21px; }
+		.page-kicker { color: var(--green); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+		.page-heading h1 { margin: 3px 0 4px; font: 800 27px/1.2 Manrope, sans-serif; letter-spacing: -.6px; }
+		.page-heading p { margin: 0; color: var(--muted); font-size: 12px; }
+		.term-pill { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #d8e6dc; border-radius: 6px; background: #fafffb; padding: 8px 10px; color: #496253; font-size: 11px; white-space: nowrap; }
+		.term-dot { width: 7px; height: 7px; border-radius: 50%; background: #3d9a67; }
+		.privacy-notice { display: flex; align-items: start; gap: 10px; margin-bottom: 20px; padding: 11px 13px; border: 1px solid #ead9aa; border-radius: 7px; background: #fff9e9; color: #6d5b31; font-size: 11px; }
+		.privacy-notice svg { flex-shrink: 0; margin-top: 1px; }
+		.stats-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+		.stat-card { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 14px 15px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); }
+		.stat-icon { width: 35px; height: 35px; flex-shrink: 0; display: grid; place-items: center; border-radius: 8px; color: var(--green); background: #e9f3ec; }
+		.stat-card:nth-child(2) .stat-icon { color: var(--blue); background: #eaf0f8; }
+		.stat-card:nth-child(3) .stat-icon { color: #a56a28; background: #fbf1df; }
+		.stat-value { display: block; font: 800 19px/1.2 Manrope, sans-serif; }
+		.stat-label { display: block; color: var(--muted); font-size: 10px; }
+		.workspace-grid { display: grid; grid-template-columns: 350px minmax(0, 1fr); gap: 16px; align-items: start; }
+		.panel { border: 1px solid var(--line); border-radius: 8px; background: var(--white); }
+		.panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 17px; border-bottom: 1px solid #edf1ed; }
+		.panel-header h2 { margin: 0; font: 700 14px Manrope, sans-serif; }
+		.panel-header p { margin: 3px 0 0; color: var(--muted); font-size: 10px; }
+		.enrollment-form { display: grid; gap: 12px; padding: 16px 17px 17px; }
+		.form-section-title { margin: 1px 0 -3px; color: var(--green); font-size: 9px; font-weight: 700; letter-spacing: .9px; text-transform: uppercase; }
+		.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+		.enrollment-form label { display: grid; gap: 5px; min-width: 0; color: #45564b; font-size: 10px; font-weight: 700; }
+		.enrollment-form input, .enrollment-form select { width: 100%; height: 36px; padding: 0 9px; border: 1px solid #dce5de; border-radius: 5px; outline: none; background: white; color: var(--ink); font-size: 11px; }
+		.enrollment-form input:focus, .enrollment-form select:focus, .register-search:focus { border-color: #5d9974; box-shadow: 0 0 0 3px rgb(23 102 68 / 9%); }
+		.enrollment-form input::placeholder { color: #a0aaa3; }
+		.field-full { grid-column: 1 / -1; }
+		.form-help { margin: -3px 0 0; color: var(--muted); font-size: 9px; }
+		.submit-registration { width: 100%; min-height: 40px; border: 0; border-radius: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; color: white; background: var(--green); font-size: 11px; font-weight: 700; cursor: pointer; }
+		.submit-registration:hover { background: #105536; }
+		.register-panel { min-width: 0; }
+		.register-toolbar { display: flex; align-items: center; gap: 8px; }
+		.register-search { width: 180px; height: 34px; padding: 0 9px; border: 1px solid #dce5de; border-radius: 5px; outline: none; font-size: 10px; }
+		.utility-button { height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 9px; border: 1px solid #dce5de; border-radius: 5px; background: white; color: #3c5947; font-size: 10px; font-weight: 600; cursor: pointer; }
+		.utility-button:hover { background: #f4f8f5; }
+		.register-list { display: grid; }
+		.student-row { display: grid; grid-template-columns: minmax(120px, 1.5fr) minmax(70px, .65fr) minmax(110px, 1.1fr) minmax(105px, .9fr) 25px; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #edf1ed; }
+		.student-row:last-child { border-bottom: 0; }
+		.student-name { overflow-wrap: anywhere; font-size: 11px; font-weight: 700; }
+		.student-detail { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; font-weight: 400; }
+		.student-class { width: fit-content; padding: 4px 7px; border-radius: 4px; background: #eaf3ec; color: #276344; font-size: 9px; font-weight: 700; }
+		.student-guardian { overflow-wrap: anywhere; font-size: 10px; }
+		.student-district { color: #5e6d63; font-size: 10px; }
+		.student-id { color: var(--muted); font: 600 9px Manrope, sans-serif; }
+		.delete-student { width: 25px; height: 25px; display: grid; place-items: center; border: 0; border-radius: 4px; color: #7e8981; background: transparent; cursor: pointer; }
+		.delete-student:hover { color: #b64c3e; background: #fbefed; }
+		.list-head { display: grid; grid-template-columns: minmax(120px, 1.5fr) minmax(70px, .65fr) minmax(110px, 1.1fr) minmax(105px, .9fr) 25px; gap: 10px; padding: 9px 16px; background: #f8faf8; color: #77847b; font-size: 9px; font-weight: 700; }
+		.empty-register { padding: 40px 18px; color: var(--muted); text-align: center; }
+		.empty-register strong { display: block; margin: 8px 0 3px; color: #394c40; font: 700 12px Manrope, sans-serif; }
+		.empty-register span { font-size: 10px; }
+		.register-footer { display: flex; justify-content: space-between; gap: 8px; padding: 10px 16px; border-top: 1px solid #edf1ed; color: var(--muted); font-size: 9px; }
+		.toast { position: fixed; right: 20px; bottom: 20px; z-index: 20; transform: translateY(12px); opacity: 0; pointer-events: none; padding: 11px 14px; border-radius: 6px; background: #203d2d; color: white; font-size: 11px; box-shadow: 0 8px 24px rgb(19 47 31 / 20%); transition: opacity .2s, transform .2s; }
+		.toast.show { transform: translateY(0); opacity: 1; }
+		@media (max-width: 900px) {
+			.workspace-grid { grid-template-columns: 315px minmax(0, 1fr); gap: 12px; }
+			.enroll-topbar-inner, .enroll-main { width: calc(100% - 32px); }
+			.student-row, .list-head { grid-template-columns: minmax(95px, 1.3fr) 60px minmax(90px, 1fr) 20px; }
+			.student-district, .list-head span:nth-child(4) { display: none; }
+		}
+		@media (max-width: 700px) {
+			.enroll-topbar { height: 60px; }
+			.enroll-topbar-inner, .enroll-main { width: calc(100% - 28px); }
+			.school-label { font-size: 10px; }
+			.school-config input { width: min(130px, 34vw); }
+			.enroll-main { padding-top: 24px; }
+			.page-heading { align-items: start; }
+			.page-heading h1 { font-size: 23px; }
+			.term-pill { display: none; }
+			.stats-row { gap: 7px; }
+			.stat-card { gap: 7px; padding: 10px 8px; }
+			.stat-icon { width: 29px; height: 29px; }
+			.stat-value { font-size: 16px; }
+			.stat-label { font-size: 9px; }
+			.workspace-grid { grid-template-columns: 1fr; }
+			.enrollment-form { grid-template-columns: minmax(0, 1fr); }
+			.form-section-title, .form-help, .submit-registration { grid-column: 1 / -1; }
+			.panel-header { padding: 13px; }
+			.register-toolbar { gap: 5px; }
+			.register-search { width: min(130px, 32vw); }
+			.utility-button { padding: 0 7px; font-size: 0; }
+			.utility-button svg { width: 16px; height: 16px; }
+			.list-head { display: none; }
+			.student-row { grid-template-columns: minmax(0, 1fr) auto 25px; gap: 6px; padding: 12px; }
+			.student-guardian { grid-column: 1; grid-row: 2; color: var(--muted); font-size: 9px; }
+			.student-class { grid-column: 2; grid-row: 1; }
+			.student-district { display: none; }
+			.student-row .delete-student { grid-column: 3; grid-row: 1; }
+			.student-id { display: none; }
+		}
+		@media (max-width: 400px) {
+			.school-config span { display: none; }
+			.school-config input { width: 112px; }
+			.stat-card { gap: 6px; padding: 9px 6px; }
+			.stat-icon { width: 24px; height: 24px; }
+			.stat-label { overflow-wrap: anywhere; }
+		}
+		.report-area { margin-top: 35px; }
+		.report-section-heading { display: flex; justify-content: space-between; align-items: end; gap: 12px; margin-bottom: 15px; }
+		.report-section-heading h2 { margin: 3px 0 4px; font: 800 21px/1.2 Manrope, sans-serif; }
+		.report-section-heading p { margin: 0; color: var(--muted); font-size: 11px; }
+		.report-grid { display: grid; grid-template-columns: minmax(310px, .88fr) minmax(0, 1.12fr); gap: 14px; align-items: start; }
+		.report-form label { display: grid; gap: 5px; color: #45564b; font-size: 10px; font-weight: 700; }
+		.report-form input, .report-form select { width: 100%; height: 35px; padding: 0 9px; border: 1px solid #dce5de; border-radius: 5px; outline: none; background: white; color: var(--ink); font-size: 11px; }
+		.report-form input:focus, .report-form select:focus { border-color: #5d9974; box-shadow: 0 0 0 3px rgb(23 102 68 / 9%); }
+		.subject-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 0 -5px; }
+		.subject-heading strong { color: var(--green); font-size: 9px; letter-spacing: .7px; text-transform: uppercase; }
+		.subject-columns, .score-row { display: grid; grid-template-columns: minmax(0, 1fr) 80px 27px; gap: 7px; align-items: center; }
+		.subject-columns { padding: 0 4px; color: #7a877e; font-size: 9px; font-weight: 700; }
+		.subject-rows { display: grid; gap: 6px; max-height: 320px; overflow: auto; padding-right: 2px; }
+		.score-row input { min-width: 0; }
+		.score-row .subject-name-input { text-align: left; }
+		.score-row .subject-score { text-align: center; }
+		.remove-subject { width: 27px; height: 27px; border: 0; border-radius: 4px; display: grid; place-items: center; color: #7c8980; background: transparent; cursor: pointer; }
+		.remove-subject:hover { color: #b64c3e; background: #fbefed; }
+		.add-subject { width: fit-content; padding: 0; border: 0; background: transparent; color: var(--green); font-size: 10px; font-weight: 700; cursor: pointer; }
+		.add-subject:hover { text-decoration: underline; }
+		.score-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+		.score-summary > div { padding: 9px 10px; border: 1px solid #e2ebe4; border-radius: 5px; background: #f7faf7; }
+		.score-summary span { display: block; color: var(--muted); font-size: 9px; }
+		.score-summary strong { display: block; margin-top: 2px; color: var(--green); font: 700 15px Manrope, sans-serif; }
+		.disabled-help { padding: 20px 16px; color: var(--muted); text-align: center; font-size: 10px; }
+		.report-history { display: grid; }
+		.report-history-row { display: grid; grid-template-columns: minmax(0, 1fr) 66px 66px 25px; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #edf1ed; }
+		.report-history-row:last-child { border-bottom: 0; }
+		.report-person { overflow-wrap: anywhere; font-size: 10px; font-weight: 700; }
+		.report-meta { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; font-weight: 400; }
+		.report-average { color: var(--green); font: 700 12px Manrope, sans-serif; }
+		.report-action { border: 0; padding: 5px; border-radius: 4px; background: transparent; color: var(--green); font-size: 10px; font-weight: 700; cursor: pointer; }
+		.report-action:hover { background: #eef5ef; }
+		.report-preview { margin-top: 15px; padding: 17px; }
+		.report-print-actions { display: flex; justify-content: end; margin-bottom: 12px; }
+		.report-print-actions a { text-decoration: none; }
+		.report-print-actions a[hidden] { display: none; }
+		.report-sheet { max-width: 740px; margin: auto; padding: 30px; border: 1px solid #dfe7e1; background: white; }
+		.sheet-head { display: flex; justify-content: space-between; gap: 15px; padding-bottom: 17px; border-bottom: 2px solid var(--green); }
+		.sheet-school-brand { display: flex; align-items: center; gap: 12px; }
+		.sheet-school-logo { width: 52px; height: 52px; object-fit: contain; }
+		.sheet-brand { color: var(--green); font: 800 10px Manrope, sans-serif; letter-spacing: 1px; }
+		.sheet-head h3 { margin: 5px 0 2px; font: 800 20px Manrope, sans-serif; }
+		.sheet-head p { margin: 0; color: var(--muted); font-size: 11px; }
+		.sheet-term { text-align: right; font-size: 10px; font-weight: 700; }
+		.sheet-term span { display: block; margin-top: 4px; color: var(--muted); font-weight: 400; }
+		.sheet-student { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 12px; padding: 15px 0; }
+		.sheet-student span { display: block; color: var(--muted); font-size: 9px; }
+		.sheet-student strong { display: block; margin-top: 3px; font-size: 11px; }
+		.subject-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+		.subject-table th, .subject-table td { padding: 7px 9px; border: 1px solid #e2e9e3; text-align: left; }
+		.subject-table th { background: #f2f7f3; color: #43594a; }
+		.subject-table th:last-child, .subject-table td:last-child { width: 130px; text-align: center; }
+		.sheet-totals { display: flex; justify-content: end; gap: 18px; margin-top: 13px; }
+		.sheet-total { min-width: 130px; padding: 9px 11px; border: 1px solid #dfe8e1; border-radius: 4px; }
+		.sheet-total span { display: block; color: var(--muted); font-size: 9px; }
+		.sheet-total strong { display: block; margin-top: 3px; color: var(--green); font: 700 15px Manrope, sans-serif; }
+		.sheet-signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 25px; color: #58675d; font-size: 9px; }
+		.sheet-signatures strong { display: block; margin-top: 3px; color: var(--ink); font-size: 10px; }
+		.signature-entry { display: block; height: 23px; margin-bottom: 5px; border-bottom: 1px solid #bfcac1; }
+		.signature-input-help, .logo-match-note { margin: -3px 0 0; color: var(--muted); font-size: 9px; }
+		@media (max-width: 900px) {
+			.report-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+		}
+		@media (max-width: 700px) {
+			.report-grid { grid-template-columns: 1fr; }
+			.report-section-heading h2 { font-size: 19px; }
+			.report-section-heading .term-pill { display: none; }
+			.report-sheet { padding: 18px 12px; }
+			.sheet-head h3 { font-size: 16px; }
+			.sheet-student { gap: 7px; }
+			.sheet-totals { gap: 8px; }
+			.sheet-total { min-width: 0; flex: 1; }
+			.report-history-row { grid-template-columns: minmax(0, 1fr) 55px 54px 24px; gap: 5px; padding: 10px; }
+		}
+		@media print {
+			body { background: white; }
+			.enroll-topbar, .enroll-main > :not(.report-area), .report-section-heading, .report-grid, .report-print-actions, .toast { display: none !important; }
+			.enroll-main { width: 100%; margin: 0; padding: 0; }
+			.report-area { display: block !important; margin: 0; }
+			.report-preview { display: block !important; margin: 0; padding: 0; border: 0; }
+			.report-sheet { max-width: none; border: 0; padding: 12mm; }
+			.signature-entry { display: none; }
+		}
+		.auth-screen { position: relative; min-height: 100vh; display: grid; place-items: center; padding: 28px 16px; background: #edf3ee; }
+		.auth-screen::before { position: absolute; inset: 0 0 auto; height: 7px; background: linear-gradient(to right, #1b6a42 0 33.33%, #fff 33.33% 66.66%, #3265a8 66.66%); content: ""; }
+		.auth-screen[hidden], #app-shell[hidden], .share-backdrop[hidden] { display: none !important; }
+		.auth-card { width: min(430px, 100%); padding: 28px; border: 1px solid #dce6de; border-radius: 9px; background: white; box-shadow: 0 18px 55px rgb(30 61 41 / 8%); }
+		.auth-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 25px; }
+		.auth-brand strong { display: block; font: 800 16px Manrope, sans-serif; }
+		.auth-brand small { display: block; color: var(--muted); font-size: 9px; letter-spacing: .8px; }
+		.auth-card h1 { margin: 4px 0 5px; font: 800 24px Manrope, sans-serif; }
+		.auth-description { margin: 0 0 20px; color: var(--muted); font-size: 12px; }
+		.auth-form { display: grid; gap: 12px; }
+		.auth-form label { display: grid; gap: 6px; color: #45564b; font-size: 10px; font-weight: 700; }
+		.auth-form input { height: 40px; width: 100%; padding: 0 10px; border: 1px solid #dce5de; border-radius: 5px; outline: none; font-size: 12px; }
+		.auth-form input:focus { border-color: #5d9974; box-shadow: 0 0 0 3px rgb(23 102 68 / 9%); }
+		.auth-form [hidden] { display: none !important; }
+		.auth-error { min-height: 17px; margin: 0; color: #b64c3e; font-size: 10px; }
+		.auth-submit { width: 100%; height: 41px; border: 0; border-radius: 5px; background: var(--green); color: white; font-size: 11px; font-weight: 700; cursor: pointer; }
+		.auth-submit:hover { background: #105536; }
+		.auth-submit:disabled { opacity: .55; cursor: not-allowed; }
+		.auth-switch { width: 100%; margin-top: 14px; border: 0; background: transparent; color: var(--green); font-size: 10px; font-weight: 700; cursor: pointer; }
+		.auth-note { margin: 16px 0 0; padding-top: 13px; border-top: 1px solid #edf1ed; color: var(--muted); font-size: 9px; line-height: 1.6; }
+		.teacher-session { display: flex; align-items: center; gap: 8px; color: #405449; font-size: 10px; font-weight: 700; white-space: nowrap; }
+		.teacher-session .utility-button { height: 32px; }
+		.student-row, .list-head { grid-template-columns: minmax(120px, 1.5fr) minmax(70px, .65fr) minmax(110px, 1.1fr) minmax(105px, .9fr) 82px; }
+		.student-actions { display: flex; align-items: center; justify-content: end; gap: 3px; }
+		.share-student { min-width: 28px; height: 27px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0 5px; border: 0; border-radius: 4px; color: var(--green); background: transparent; font-size: 9px; font-weight: 700; cursor: pointer; }
+		.share-student:hover { background: #eef5ef; }
+		.access-badge { max-width: 80px; color: #66746a; font-size: 8px; text-align: right; }
+		.share-backdrop { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 18px; background: rgb(23 36 28 / 48%); }
+		.share-panel { width: min(440px, 100%); max-height: 85vh; overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: white; box-shadow: 0 20px 70px rgb(20 40 25 / 22%); }
+		.share-panel-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; padding: 16px; border-bottom: 1px solid var(--line); }
+		.share-panel-head h2 { margin: 0; font: 700 15px Manrope, sans-serif; }
+		.share-panel-head p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+		.share-form { display: grid; gap: 10px; padding: 15px 16px; }
+		.share-form label { display: grid; gap: 5px; color: #45564b; font-size: 10px; font-weight: 700; }
+		.share-form input, .share-form select { height: 36px; padding: 0 9px; border: 1px solid #dce5de; border-radius: 5px; outline: none; font-size: 11px; }
+		.share-list { padding: 0 16px 15px; }
+		.share-list h3 { margin: 0 0 7px; color: var(--muted); font-size: 9px; letter-spacing: .7px; text-transform: uppercase; }
+		.share-entry { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid #eef2ef; font-size: 10px; }
+		.share-entry small { display: block; color: var(--muted); font-size: 9px; }
+		.share-revoke { border: 0; background: transparent; color: #b64c3e; font-size: 9px; font-weight: 700; cursor: pointer; }
+		.logo-lookup-note { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+		@media (max-width: 900px) {
+			.student-row, .list-head { grid-template-columns: minmax(95px, 1.3fr) 60px minmax(90px, 1fr) 65px; }
+			.student-district, .list-head span:nth-child(4) { display: none; }
+		}
+		@media (max-width: 700px) {
+			.enroll-topbar { height: auto; }
+			.enroll-topbar-inner { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; grid-template-rows: 40px 34px; gap: 4px 5px; padding: 7px 0; }
+			.enroll-brand { grid-column: 1; grid-row: 1; }
+			.school-config { grid-column: 1; grid-row: 2; justify-self: start; }
+			.school-logo-preview { grid-column: 2; grid-row: 2; width: 28px; height: 28px; }
+			.school-logo-button { grid-column: 3; grid-row: 2; width: 28px; min-width: 28px; height: 28px; }
+			.school-online-button { grid-column: 4; grid-row: 2; width: 28px; min-width: 28px; height: 28px; }
+			.teacher-session { grid-column: 4; grid-row: 1; }
+			.teacher-session > span { display: none; }
+			.teacher-session .utility-button { width: 32px; padding: 0; }
+			.teacher-session .utility-button span { display: none; }
+			.school-config input { width: min(170px, 44vw); }
+			.student-row { grid-template-columns: minmax(0, 1fr) auto 25px; gap: 6px; padding: 12px; }
+			.student-guardian { grid-column: 1; grid-row: 2; color: var(--muted); font-size: 9px; }
+			.student-class { grid-column: 2; grid-row: 1; }
+			.student-actions { grid-column: 2 / 4; grid-row: 2; gap: 2px; }
+			.student-district { display: none; }
+			.student-id { display: none; }
+		}
+		@media (max-width: 400px) {
+			.enroll-brand-sub { display: none; }
+			.school-config { justify-self: start; }
+			.school-config span { display: none; }
+			.school-config input { width: min(155px, 48vw); }
+		}
+		@media (max-width: 700px) {
+			.auth-screen { min-height: 100vh; min-height: 100dvh; padding: calc(18px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom)); }
+			.auth-card { padding: 22px 18px; }
+			.auth-form input, .enrollment-form input, .enrollment-form select, .report-form input, .report-form select, .school-config input, .register-search, .assistant-form input, .share-form input, .share-form select { min-height: 44px; font-size: 16px; }
+			.auth-submit, .submit-registration { min-height: 48px; }
+			.enroll-topbar { height: auto; padding-top: env(safe-area-inset-top); }
+			.enroll-topbar-inner { grid-template-rows: 44px 44px; }
+			.school-config input { width: min(170px, 44vw); }
+			.school-logo-preview { width: 34px; height: 34px; }
+			.school-logo-button, .school-online-button { width: 44px; min-width: 44px; height: 44px; }
+			.teacher-session .utility-button { width: 44px; min-width: 44px; height: 44px; }
+			.panel-header { flex-wrap: wrap; }
+			.register-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) repeat(2, 44px); flex: 1 1 100%; width: 100%; }
+			.register-search { width: 100%; height: 44px; }
+			.register-toolbar .utility-button { width: 44px; height: 44px; padding: 0; }
+			.utility-button { min-height: 44px; }
+			.student-row .share-student, .student-row .delete-student { min-width: 40px; min-height: 40px; }
+			.assistant-toggle { right: 14px; bottom: calc(14px + env(safe-area-inset-bottom)); }
+			.assistant-panel { right: 12px; bottom: calc(78px + env(safe-area-inset-bottom)); max-height: calc(100dvh - 100px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+			.assistant-messages { max-height: min(38dvh, 260px); }
+			.assistant-form input, .assistant-form button { min-height: 44px; }
+			.share-backdrop { place-items: end center; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+			.share-panel { width: 100%; max-height: calc(100dvh - 12px - env(safe-area-inset-top)); border-radius: 12px 12px 0 0; }
+			.report-print-actions { flex-wrap: wrap; justify-content: stretch; gap: 6px; }
+			.report-print-actions .utility-button { flex: 1 1 125px; height: auto; min-height: 44px; padding: 8px; font-size: 10px; text-align: center; }
+			.report-preview { padding: 12px; }
+			.sheet-head { flex-direction: column; align-items: flex-start; }
+			.sheet-term { text-align: left; }
+			.sheet-student { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+			.sheet-student > div:first-child { grid-column: 1 / -1; }
+			.sheet-student strong { overflow-wrap: anywhere; }
+			.sheet-signatures { gap: 14px; }
+		}
+	</style>
+</head>
+<body>
+	<section class="auth-screen" id="auth-screen">
+		<div class="auth-card">
+			<div class="auth-brand"><span class="enroll-logo">SR</span><span><strong>Salone Register</strong><small>SIERRA LEONE · STUDENT RECORDS</small></span></div>
+			<div class="page-kicker">Teacher workspace</div><h1 id="auth-title">Sign in</h1><p class="auth-description" id="auth-description">Sign in to access your private student register and report cards.</p>
+			<form class="auth-form" id="auth-form">
+				<label id="auth-name-field" hidden>Teacher name<input id="auth-display-name" name="displayName" maxlength="80" autocomplete="name" value="Jonathan Decker"></label>
+				<label>Username<input id="auth-username" name="username" maxlength="32" autocomplete="username" value="jonathan.decker" required></label>
+				<label id="auth-setup-token-field" hidden>One-time setup key<input id="auth-setup-token" name="setupToken" type="password" maxlength="256" autocomplete="off" spellcheck="false"></label>
+				<label>Password<input id="auth-password" name="password" type="password" minlength="12" maxlength="128" autocomplete="current-password" required></label>
+				<label id="auth-confirm-field" hidden>Confirm password<input id="auth-confirm-password" type="password" minlength="12" maxlength="128" autocomplete="new-password"></label>
+				<p class="auth-error" id="auth-error" role="alert"></p>
+				<button class="auth-submit" id="auth-submit" type="submit">Sign in</button>
+			</form>
+			<button class="auth-switch" id="auth-switch" type="button">New teacher? Create an account</button>
+			<p class="auth-note" id="auth-note">Your records are private to your account. Shared student records are visible only to teachers you authorize.</p>
+		</div>
+	</section>
+	<div id="app-shell" hidden>
+	<div class="reconnect-banner" id="reconnect-banner" aria-live="polite">Offline mode: you can view your last saved register, but live changes require a connection.</div>
+	<button class="assistant-fab" id="assistant-toggle" type="button" aria-label="Open AI guide">AI</button>
+	<aside class="assistant-panel" id="assistant-panel" hidden>
+		<div class="assistant-header">
+			<div class="assistant-brand"><span class="assistant-badge">AI</span><span>Salone Guide</span></div>
+			<button class="assistant-close" id="assistant-close" type="button" aria-label="Close guide">×</button>
+		</div>
+		<div class="assistant-messages" id="assistant-messages"></div>
+		<div class="assistant-suggestions" id="assistant-suggestions">
+			<button class="assistant-suggestion" type="button" data-question="How do I register a new student?">Register student</button>
+			<button class="assistant-suggestion" type="button" data-question="How do I prepare a report card?">Prepare report</button>
+			<button class="assistant-suggestion" type="button" data-question="How do I share a student record with another teacher?">Share access</button>
+			<button class="assistant-suggestion" type="button" data-question="What should I do when I am offline?">Offline help</button>
+		</div>
+		<form class="assistant-form" id="assistant-form">
+			<input id="assistant-input" type="text" maxlength="200" placeholder="Ask for help…" aria-label="Ask the assistant" autocomplete="off">
+			<button type="submit">Send</button>
+		</form>
+	</aside>
+	<header class="enroll-topbar">
+		<div class="enroll-topbar-inner">
+			<div class="enroll-brand"><span class="enroll-logo">SR</span><span><span class="enroll-brand-name">Salone Register</span><span class="enroll-brand-sub">SIERRA LEONE · STUDENT ENROLLMENT</span></span></div>
+			<label class="school-config"><span>School</span><input id="school-name" list="school-directory" maxlength="100" aria-label="School name" placeholder="Search school directory"><datalist id="school-directory"></datalist></label>
+			<img class="school-logo-preview" id="school-logo-preview" alt="School logo" hidden>
+			<button class="utility-button school-logo-button" id="upload-school-logo" type="button" title="Add a school logo from this device" aria-label="Add school logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 16.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2.5M12 15V3m0 0L8 7m4-4 4 4"></path></svg></button>
+			<button class="utility-button school-logo-button school-online-button" id="search-school-logo" type="button" title="Find a website icon by school domain" aria-label="Find school website icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"></path></svg></button>
+			<input id="school-logo-file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+			<div class="teacher-session"><span class="status-pill" id="network-status" role="status" aria-live="polite">Online</span><span id="teacher-name"></span><button class="utility-button" id="install-app" type="button" aria-label="Install Salone Register" title="Add Salone Register to this phone"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"></path></svg><span>Install app</span></button><button class="utility-button" id="logout-button" type="button" aria-label="Sign out"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M21 19V5a2 2 0 0 0-2-2h-5"></path></svg><span>Sign out</span></button></div>
+		</div>
+	</header>
+	<main class="enroll-main">
+		<section class="page-heading"><div><div class="page-kicker">School administration</div><h1>Student registration</h1><p>Keep enrollment details organized and spend less time on paperwork.</p></div><span class="term-pill"><span class="term-dot"></span>2026–2027 school year</span></section>
+		<div class="privacy-notice"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"></path></svg><span><strong>Private records:</strong> only you and teachers you authorize can see these learners and their report cards. Shared access can be revoked at any time.</span></div>
+		<section class="stats-row" aria-label="Enrollment summary">
+			<div class="stat-card"><span class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6M23 11h-6"></path></svg></span><span><span class="stat-value" id="total-count">0</span><span class="stat-label">Students registered</span></span></div>
+			<div class="stat-card"><span class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2ZM8 7h8M8 11h8"></path></svg></span><span><span class="stat-value" id="primary-count">0</span><span class="stat-label">Primary classes</span></span></div>
+			<div class="stat-card"><span class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-5h6v5M9 9h.01M15 9h.01M9 12h.01M15 12h.01"></path></svg></span><span><span class="stat-value" id="secondary-count">0</span><span class="stat-label">Secondary classes</span></span></div>
+		</section>
+		<div class="workspace-grid">
+			<section class="panel" aria-labelledby="form-heading">
+				<div class="panel-header"><div><h2 id="form-heading">Register a student</h2><p>Enter the learner and guardian details.</p></div></div>
+				<form class="enrollment-form" id="registration-form">
+					<p class="form-section-title">Student details</p>
+					<label class="field-full">Student full name<input name="studentName" required maxlength="100" autocomplete="off" placeholder="As written on school records"></label>
+					<div class="form-grid"><label>Age<input name="age" type="number" min="3" max="25" required placeholder="e.g. 10"></label><label>Class<select name="className" required><option value="">Choose class</option><option>Nursery 1</option><option>Nursery 2</option><option>Class 1</option><option>Class 2</option><option>Class 3</option><option>Class 4</option><option>Class 5</option><option>Class 6</option><option>JSS 1</option><option>JSS 2</option><option>JSS 3</option><option>SSS 1</option><option>SSS 2</option><option>SSS 3</option></select></label></div>
+					<label>District<select name="district" required><option value="">Choose district</option><option>Bo</option><option>Bombali</option><option>Bonthe</option><option>Falaba</option><option>Karene</option><option>Kailahun</option><option>Kambia</option><option>Kenema</option><option>Koinadugu</option><option>Kono</option><option>Moyamba</option><option>Port Loko</option><option>Pujehun</option><option>Tonkolili</option><option>Western Area Rural</option><option>Western Area Urban</option></select></label>
+					<p class="form-section-title">Parent or guardian</p>
+					<label class="field-full">Guardian full name<input name="guardianName" required maxlength="100" placeholder="Parent or guardian name"></label>
+					<label class="field-full">Guardian phone number<input name="guardianPhone" type="tel" required maxlength="25" autocomplete="off" placeholder="e.g. +232 76 000 000"></label>
+					<label class="field-full">Guardian email <span>(optional)</span><input name="guardianEmail" type="email" maxlength="254" autocomplete="off" placeholder="parent@example.com"></label>
+					<p class="form-help">Only collect information your school needs for enrollment.</p>
+					<button class="submit-registration" type="submit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Register student</button>
+				</form>
+			</section>
+			<section class="panel register-panel" aria-labelledby="register-heading">
+				<div class="panel-header"><div><h2 id="register-heading">Student register</h2><p id="register-subtitle">Your enrollment records</p></div><div class="register-toolbar"><input class="register-search" id="register-search" type="search" aria-label="Search student register" placeholder="Search register"><button class="utility-button" id="export-button" type="button" title="Export CSV" aria-label="Export CSV"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>Export CSV</button><button class="utility-button" id="print-button" type="button" title="Print register" aria-label="Print register"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"></path></svg>Print</button></div></div>
+				<div class="list-head" aria-hidden="true"><span>Student</span><span>Class</span><span>Parent / guardian</span><span>District</span><span></span></div>
+				<div class="register-list" id="register-list" aria-live="polite"></div>
+				<div class="register-footer"><span id="visible-count">0 students</span><span>Stored on the school server</span></div>
+			</section>
+		</div>
+		<section class="report-area" aria-labelledby="reports-heading">
+			<div class="report-section-heading"><div><div class="page-kicker">Assessment</div><h2 id="reports-heading">Student report cards</h2><p>Enter term scores by subject, then print a report for the learner.</p></div><span class="term-pill">Marks out of 100</span></div>
+			<div class="report-grid">
+				<section class="panel" aria-labelledby="report-form-heading">
+					<div class="panel-header"><div><h2 id="report-form-heading">Prepare a report</h2><p>Choose a learner and enter their subject marks.</p></div></div>
+					<form class="enrollment-form report-form" id="report-form">
+						<label class="field-full">Student<select id="report-student" name="studentId" required></select></label>
+						<div class="form-grid"><label>Term<select name="term" required><option>Term 1</option><option>Term 2</option><option>Term 3</option></select></label><label>Academic year<input name="academicYear" required maxlength="9" value="2026/2027"></label></div>
+						<div class="form-grid"><label>Class teacher name<input id="report-teacher-name" name="teacherName" maxlength="80" required></label><label>Head teacher name<input name="headTeacherName" maxlength="80" required placeholder="Enter head teacher name"></label></div>
+						<p class="signature-input-help">Names print on the report. Signature marks are for the on-screen copy only.</p>
+						<div class="subject-heading"><strong>Subject scores</strong><button class="add-subject" id="add-subject" type="button">+ Add subject</button></div>
+						<div class="subject-columns"><span>Subject</span><span>Score / 100</span><span></span></div>
+						<div class="subject-rows" id="subject-rows"></div>
+						<p class="form-help">Leave subjects the learner does not take blank. Only entered marks count toward the total and average.</p>
+						<div class="score-summary"><div><span>Total score</span><strong id="calculated-total">0</strong></div><div><span>Average</span><strong id="calculated-average">0.00 / 100</strong></div></div>
+						<button class="submit-registration" id="save-report" type="submit">Save report card</button>
+					</form>
+				</section>
+				<section class="panel" aria-labelledby="saved-reports-heading">
+					<div class="panel-header"><div><h2 id="saved-reports-heading">Saved reports</h2><p>Open a report to review or print it.</p></div></div>
+					<div class="report-history" id="report-history" aria-live="polite"></div>
+				</section>
+			</div>
+			<section class="panel report-preview" id="report-preview" hidden aria-label="Report card preview">
+				<div class="report-print-actions"><button class="utility-button" id="share-report-pdf" type="button" title="Share the PDF using phone apps"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path></svg>Share PDF</button><button class="utility-button" id="download-report-pdf" type="button" title="Download report card PDF"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"></path></svg>Download PDF</button><a class="utility-button" id="share-email" hidden><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>Email summary</a><a class="utility-button" id="share-whatsapp" target="_blank" rel="noopener noreferrer" hidden><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z"></path></svg>WhatsApp summary</a><button class="utility-button" id="print-report" type="button"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"></path></svg>Print report card</button></div>
+				<div class="report-sheet" id="report-sheet"></div>
+			</section>
+		</section>
+	</main>
+	<div class="toast" id="toast" role="status" aria-live="polite"></div>
+	<div class="share-backdrop" id="share-modal" hidden role="dialog" aria-modal="true" aria-labelledby="share-title">
+		<section class="share-panel"><div class="share-panel-head"><div><h2 id="share-title">Share student record</h2><p id="share-student-name"></p></div><button class="close-button" id="close-share" type="button" aria-label="Close">&times;</button></div>
+			<form class="share-form" id="share-form"><label>Teacher name or username<input name="username" list="teacher-directory" required maxlength="80" autocomplete="off" placeholder="e.g. Jonathan Decker"><datalist id="teacher-directory"></datalist></label><label>Permission<select name="permission"><option value="view">View student and reports</option><option value="edit">View and prepare reports</option></select></label><button class="submit-registration" type="submit">Grant access</button></form>
+			<div class="share-list"><h3>Teachers with access</h3><div id="share-list"></div></div>
+		</section>
+	</div>
+	<div class="share-backdrop" id="logo-modal" hidden role="dialog" aria-modal="true" aria-labelledby="logo-modal-title">
+		<section class="share-panel"><div class="share-panel-head"><div><h2 id="logo-modal-title">Find school website icon</h2><p id="logo-school-name"></p></div><button class="close-button" id="close-logo-modal" type="button" aria-label="Close">&times;</button></div>
+			<form class="share-form" id="logo-lookup-form"><label>Official school website domain<input name="domain" required maxlength="253" placeholder="school.edu.sl"></label><p class="logo-lookup-note">We’ll look for that site's icon. It may not be the official school badge; you can instead upload an approved logo from the school’s files.</p><button class="submit-registration" type="submit">Find website icon</button></form>
+		</section>
+	</div>
+	</div>
+	<script>
+		if (window.isSecureContext && "serviceWorker" in navigator) {
+			navigator.serviceWorker.register("/sw.js").catch(() => {});
+		}
+
+		if (window.location.protocol === "file:") {
+			window.location.replace("http://127.0.0.1:4173/");
+		}
+
+		let students = [];
+		let reports = [];
+		let currentTeacher = null;
+		let searchTerm = "";
+		let toastTimeout;
+		let authMode = "login";
+		let idleTimer;
+		let heartbeatTimer;
+		let lastActivity = 0;
+		let lastHeartbeat = 0;
+		let sharingStudentId = "";
+		let currentPreviewReportId = "";
+		let installPromptEvent = null;
+		let activeSchoolLogo = "";
+		let activeSchoolLogoName = "";
+		let offlineMode = false;
+		let logoSearchTimer;
+		let teacherSearchTimer;
+		const workspaceSnapshotKey = "salone-register-workspace";
+		const networkStatus = document.getElementById("network-status");
+		const schoolNameInput = document.getElementById("school-name");
+		const registerList = document.getElementById("register-list");
+		const assistantMessages = document.getElementById("assistant-messages");
+
+		function escapeHtml(value) {
+			return String(value).replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[character]);
+		}
+
+		async function requestApi(path, options = {}) {
+			if (offlineMode && options.method && options.method !== "GET") throw new Error("This action needs a connection to the server.");
+			const headers = new Headers(options.headers || {});
+			if (options.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+			let response;
+			try {
+				response = await fetch(path, { ...options, headers, credentials: "same-origin" });
+			} catch {
+				throw new Error("Cannot reach the secure server. Check your connection and try again.");
+			}
+			const result = await response.json().catch(() => ({}));
+			if (response.status === 401 && currentTeacher && path !== "/api/auth/logout") void closeSession("Your 30-minute idle session ended. Sign in again.");
+			if (!response.ok) throw new Error(result.error || "The request could not be completed.");
+			return result;
+		}
+
+		function saveWorkspaceSnapshot() {
+			if (!currentTeacher) return;
+			localStorage.setItem(workspaceSnapshotKey, JSON.stringify({ teacher: currentTeacher, students, reports }));
+		}
+
+		function loadWorkspaceSnapshot() {
+			try {
+				const snapshot = JSON.parse(localStorage.getItem(workspaceSnapshotKey) || "null");
+				if (!snapshot?.teacher || !Array.isArray(snapshot.students) || !Array.isArray(snapshot.reports)) return null;
+				return snapshot;
+			} catch {
+				return null;
+			}
+		}
+
+		async function refreshWorkspace(preferredStudentId) {
+			try {
+				const [studentResponse, reportResponse] = await Promise.all([requestApi("/api/students"), requestApi("/api/reports")]);
+				students = studentResponse.students;
+				reports = reportResponse.reports;
+				offlineMode = false;
+				saveWorkspaceSnapshot();
+			} catch (error) {
+				const snapshot = loadWorkspaceSnapshot();
+				if (!snapshot || snapshot.teacher.username !== currentTeacher?.username) throw error;
+				students = snapshot.students;
+				reports = snapshot.reports;
+				offlineMode = true;
+				showToast("Offline mode: showing your last saved register.");
+			}
+			renderRegister();
+			renderReportStudents(preferredStudentId);
+			renderReportHistory();
+		}
+
+		function setSchoolLogo(name, dataUrl) {
+			const image = document.getElementById("school-logo-preview");
+			activeSchoolLogoName = name || "";
+			activeSchoolLogo = dataUrl || "";
+			image.hidden = !activeSchoolLogo;
+			image.src = activeSchoolLogo;
+			image.alt = activeSchoolLogo ? `${activeSchoolLogoName} logo` : "School logo";
+		}
+
+		async function findSchoolLogo(name) {
+			const schoolName = name.trim();
+			if (!schoolName) { setSchoolLogo("", ""); return; }
+			try {
+				const params = new URLSearchParams({ q: schoolName });
+				const { schools } = await requestApi(`/api/schools?${params}`);
+				const match = schools.find(school => school.name.toLocaleLowerCase() === schoolName.toLocaleLowerCase());
+				if (schoolNameInput.value.trim().toLocaleLowerCase() !== schoolName.toLocaleLowerCase()) return;
+				setSchoolLogo(match?.name || "", match?.logo || "");
+			} catch (error) { showToast(error.message); }
+		}
+
+		async function searchSchoolLogos(query) {
+			clearTimeout(logoSearchTimer);
+			if (query.trim().length < 2) {
+				document.getElementById("school-directory").replaceChildren();
+				return;
+			}
+			logoSearchTimer = setTimeout(async () => {
+				try {
+					const params = new URLSearchParams({ q: query.trim() });
+					const { schools } = await requestApi(`/api/schools?${params}`);
+					document.getElementById("school-directory").innerHTML = schools.map(school => `<option value="${escapeHtml(school.name)}"></option>`).join("");
+				} catch (error) { showToast(error.message); }
+			}, 220);
+		}
+
+		function searchTeachers(query) {
+			clearTimeout(teacherSearchTimer);
+			const suggestions = document.getElementById("teacher-directory");
+			if (query.trim().length < 2) { suggestions.replaceChildren(); return; }
+			teacherSearchTimer = setTimeout(async () => {
+				try {
+					const params = new URLSearchParams({ q: query.trim() });
+					const { teachers } = await requestApi(`/api/teachers?${params}`);
+					suggestions.innerHTML = teachers.map(teacher => `<option value="${escapeHtml(teacher.displayName)}" label="@${escapeHtml(teacher.username)}"></option>`).join("");
+				} catch (error) { showToast(error.message); }
+			}, 180);
+		}
+
+		function renderRegister() {
+			const query = searchTerm.toLowerCase();
+			const visibleStudents = students.filter(student => [student.id, student.school, student.studentName, student.className, student.guardianName, student.guardianPhone, student.guardianEmail, student.district].join(" ").toLowerCase().includes(query));
+			const primaryCount = students.filter(student => student.className.startsWith("Class ")).length;
+			const secondaryCount = students.filter(student => student.className.startsWith("JSS ") || student.className.startsWith("SSS ")).length;
+			document.getElementById("total-count").textContent = students.length;
+			document.getElementById("primary-count").textContent = primaryCount;
+			document.getElementById("secondary-count").textContent = secondaryCount;
+			document.getElementById("register-subtitle").textContent = schoolNameInput.value.trim() || "Your enrollment records";
+			document.getElementById("visible-count").textContent = `${visibleStudents.length} ${visibleStudents.length === 1 ? "student" : "students"}${query ? " found" : " registered"}`;
+			if (!visibleStudents.length) {
+				registerList.innerHTML = `<div class="empty-register"><svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="#789181" stroke-width="1.5" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6M23 11h-6"></path></svg><strong>${query ? "No matching students" : "No students registered yet"}</strong><span>${query ? "Try another name, class, or district." : "Complete the form to add the first student to this register."}</span></div>`;
+				return;
+			}
+			registerList.innerHTML = visibleStudents.map(student => `<article class="student-row"><div class="student-name">${escapeHtml(student.studentName)}<span class="student-detail">Age ${escapeHtml(student.age)} · ${escapeHtml(student.id)}${student.access === "owner" ? "" : ` · Shared by ${escapeHtml(student.ownerName)}`}</span></div><span class="student-class">${escapeHtml(student.className)}</span><span class="student-guardian">${escapeHtml(student.guardianName)}<span class="student-detail">${escapeHtml(student.guardianPhone)}</span>${student.guardianEmail ? `<span class="student-detail">${escapeHtml(student.guardianEmail)}</span>` : ""}</span><span class="student-district">${escapeHtml(student.district)}</span><div class="student-actions">${student.access === "owner" ? `<button class="share-student" type="button" data-share="${escapeHtml(student.id)}" aria-label="Share ${escapeHtml(student.studentName)}" title="Share student"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path></svg></button><button class="delete-student" type="button" data-delete="${escapeHtml(student.id)}" aria-label="Remove ${escapeHtml(student.studentName)}" title="Remove student"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"></path></svg></button>` : `<span class="access-badge">Shared · ${student.access === "edit" ? "Can edit reports" : "View only"}</span>`}</div></article>`).join("");
+		}
+
+		function showToast(message) {
+			const toast = document.getElementById("toast");
+			toast.textContent = message;
+			toast.classList.add("show");
+			clearTimeout(toastTimeout);
+			toastTimeout = setTimeout(() => toast.classList.remove("show"), 2600);
+		}
+
+		function getAssistantContext() {
+			const hasStudents = students.length > 0;
+			const hasReports = reports.length > 0;
+			const appVisible = !document.getElementById("app-shell").hidden;
+			const offline = offlineMode || !navigator.onLine;
+			const activeNotice = document.getElementById("report-preview");
+			return { hasStudents, hasReports, appVisible, offline, reportPreviewOpen: activeNotice && !activeNotice.hidden };
+		}
+
+		let assistantGreeted = false;
+		function ensureAssistantGreeting() {
+			if (assistantGreeted) return;
+			addAssistantMessage("bot", "Hi, I’m Salone Guide. I can help with registration, reports, sharing, and offline use. I answer from built-in app guidance; your questions and student records are not sent to an external AI service.");
+			assistantGreeted = true;
+		}
+
+		function assistantResponse(prompt) {
+			const query = prompt.trim().toLowerCase();
+			const context = getAssistantContext();
+			if (!query) return "Ask me about registering learners, setting up reports, sharing access, or working offline.";
+			if (query.includes("how many") || query.includes("count") || query.includes("total number")) {
+				if (query.includes("report")) return `You have ${reports.length} saved report card${reports.length === 1 ? "" : "s"}.`;
+				return `There ${students.length === 1 ? "is" : "are"} ${students.length} student record${students.length === 1 ? "" : "s"} in your current register.`;
+			}
+			if (["register", "enroll", "enrol", "add student", "new student"].some(term => query.includes(term))) {
+				if (!context.hasStudents) return "You do not have any students yet. Fill in the Register a student form, add guardian details, and click Register student to create the first record.";
+				return `You currently have ${students.length} student record${students.length === 1 ? "" : "s"}. Use the registration form to add another learner or search the existing register for the right student.`;
+			}
+			if (["report", "marks", "score", "assessment", "grade"].some(term => query.includes(term))) {
+				if (!context.hasStudents) return "There are no students yet, so there is nothing to prepare a report for. Register a learner first, then open Assessment > Prepare a report.";
+				if (context.reportPreviewOpen) return "A saved report is open for review. You can print it, download the PDF, or share the PDF from the actions above. To change marks, prepare and save a new report card.";
+				return "In Student report cards, choose a learner and term, enter the teacher names, then add marks from 0 to 100 for the subjects they take. Blank subjects are excluded from the total and average. Click Save report card to review, print, download, or share the PDF.";
+			}
+			if (["share", "sharing", "access", "permission", "revoke"].some(term => query.includes(term))) {
+				if (!context.hasStudents) return "Create a student record first, then click the share icon on that student to grant another teacher access.";
+				return "Use the share icon beside a student record to grant another teacher view-only or report-edit access. Revoking permissions works the same way from the share panel.";
+			}
+			if (["offline", "connection", "internet", "wifi", "network"].some(term => query.includes(term))) {
+				if (context.offline) return "You are currently offline. The app is in read-only mode, so you can review the last saved register, but new entries, edits, shares, logo lookups, and PDF actions require reconnection.";
+				return "When the network drops, the app keeps the last saved register visible in read-only mode. Live changes resume as soon as the connection is restored.";
+			}
+			if (["export", "csv", "download register"].some(term => query.includes(term))) return "Choose Export CSV in the Student register toolbar to download the enrollment records as a spreadsheet. The export includes the records in your register, not just the currently filtered search results.";
+			if (query.includes("print")) return "Use Print in the Student register toolbar for the register, or open a saved report and choose Print report card. You can also download a report as PDF.";
+			if (["logo", "school name", "school icon", "school badge"].some(term => query.includes(term))) return "Enter the school name in the top bar. Use the upload button for an approved logo from your device, or the globe button to look up a website icon by domain. Website icons may not be official school badges.";
+			if (["install", "home screen", "app on my phone"].some(term => query.includes(term))) return "Use Install app in the top bar when your browser offers it. On iPhone, open the site in Safari, tap Share, then Add to Home Screen. Installation requires HTTPS; LAN testing over HTTP does not support it.";
+			if (["privacy", "private", "secure", "student data", "data stored"].some(term => query.includes(term))) return "Student records are private to your teacher account unless you explicitly share a record. Sign out on shared devices; this clears the saved offline workspace. Use HTTPS for real records, and never enter real student data over the unencrypted LAN test mode.";
+			if (["delete", "remove student"].some(term => query.includes(term))) return "For a student record you own, use the remove icon in that student's row. Shared records can only be removed by their owner; ask the owner to change access if needed.";
+			if (["sign out", "logout", "log out", "password", "account", "sign in", "login"].some(term => query.includes(term))) return "Use Sign out in the top-right toolbar to end your session. Teacher accounts are separate, and records stay private unless the owner explicitly shares them. If you cannot sign in, check your username and contact your server administrator for account help.";
+			if (context.offline) return "The app is offline right now, so the most useful next step is to review the last saved register and wait to reconnect before changing records.";
+			if (!context.appVisible) return "Sign in to open your teacher workspace. Once there, I can guide you through registration, reports, record sharing, exports, school logos, and offline use.";
+			if (!context.hasStudents && !context.hasReports) return "You are ready to start. Add the first student in the registration form, then prepare any report cards once the learner has been saved. You can also ask me how privacy, sharing, or exports work.";
+			if (!context.hasReports) return "You have students in the register. The next step could be preparing a report in Student report cards, exporting the register, or sharing an individual record with another teacher.";
+			return "I can help with registration, report cards, sharing access, privacy, exports, school logos, app installation, and offline use. Try asking ‘How do I prepare a report card?’ or ‘How do I protect student data?’";
+		}
+
+		function addAssistantMessage(role, text) {
+			if (!assistantMessages) return;
+			const message = document.createElement("div");
+			message.className = `assistant-message ${role}`;
+			message.innerHTML = escapeHtml(text).replace(/\n/g, "<br>");
+			assistantMessages.appendChild(message);
+			assistantMessages.scrollTop = assistantMessages.scrollHeight;
+		}
+
+		function handleAssistantQuestion(prompt) {
+			const question = prompt.trim();
+			if (!question) return;
+			ensureAssistantGreeting();
+			addAssistantMessage("user", question);
+			addAssistantMessage("bot", assistantResponse(question));
+		}
+
+		function updateNetworkStatus() {
+			const reconnectBanner = document.getElementById("reconnect-banner");
+			if (!networkStatus) return;
+			networkStatus.textContent = navigator.onLine ? "Online" : "Offline";
+			networkStatus.classList.toggle("status-offline", !navigator.onLine);
+			networkStatus.title = navigator.onLine ? "Connected to the server" : "Offline mode: read-only view of your last saved register";
+			if (reconnectBanner) {
+				reconnectBanner.classList.toggle("visible", !navigator.onLine && !!currentTeacher);
+				reconnectBanner.textContent = navigator.onLine
+					? "Connection restored. Live data is available again."
+					: "Offline mode: you can view your last saved register, but live changes require a connection.";
+			}
+			if (navigator.onLine) {
+				showToast("Back online. Live data is available again.");
+			} else if (currentTeacher) {
+				showToast("Offline mode: live changes are paused.");
+			}
+		}
+
+		document.getElementById("registration-form").addEventListener("submit", async event => {
+			event.preventDefault();
+			const form = event.currentTarget;
+			if (!schoolNameInput.value.trim()) {
+				schoolNameInput.focus();
+				showToast("Enter your school name to continue.");
+				return;
+			}
+			const values = new FormData(form);
+			const studentData = {
+				school: schoolNameInput.value.trim(),
+				studentName: values.get("studentName").trim(),
+				age: Number(values.get("age")),
+				className: values.get("className"),
+				district: values.get("district"),
+				guardianName: values.get("guardianName").trim(),
+				guardianPhone: values.get("guardianPhone").trim(),
+				guardianEmail: values.get("guardianEmail").trim()
+			};
+			try {
+				const { student } = await requestApi("/api/students", { method: "POST", body: JSON.stringify(studentData) });
+				form.reset();
+				await refreshWorkspace(student.id);
+				showToast(`Student registered · ${student.id}`);
+			} catch (error) { showToast(error.message); }
+		});
+
+			document.getElementById("register-search").addEventListener("input", event => {
+			searchTerm = event.currentTarget.value.trim();
+			renderRegister();
+		});
+		schoolNameInput.addEventListener("input", () => {
+			renderRegister();
+			searchSchoolLogos(schoolNameInput.value);
+		});
+		schoolNameInput.addEventListener("change", async () => {
+			if (!schoolNameInput.value.trim() || !currentTeacher) return;
+			try {
+				const { teacher } = await requestApi("/api/auth/profile", { method: "PATCH", body: JSON.stringify({ schoolName: schoolNameInput.value.trim() }) });
+				currentTeacher = teacher;
+				await findSchoolLogo(schoolNameInput.value);
+				showToast("School name saved to your account.");
+			} catch (error) { showToast(error.message); }
+		});
+		document.getElementById("upload-school-logo").addEventListener("click", () => {
+			if (!schoolNameInput.value.trim()) { showToast("Enter the school name before adding its logo."); schoolNameInput.focus(); return; }
+			document.getElementById("school-logo-file").click();
+		});
+		document.getElementById("school-logo-file").addEventListener("change", async event => {
+			const fileInput = event.currentTarget;
+			const file = fileInput.files[0];
+			if (!file) return;
+			if (file.size > 1024 * 1024) { showToast("Choose an image smaller than 1 MB."); fileInput.value = ""; return; }
+			try {
+				const logoDataUrl = await new Promise((resolve, reject) => {
+					const reader = new FileReader();
+					reader.addEventListener("load", () => resolve(reader.result));
+					reader.addEventListener("error", () => reject(new Error("Could not read the selected logo.")));
+					reader.readAsDataURL(file);
+				});
+				const { school } = await requestApi("/api/schools/logos", { method: "POST", body: JSON.stringify({ schoolName: schoolNameInput.value.trim(), logoDataUrl }) });
+				setSchoolLogo(school.name, school.logo);
+				document.getElementById("school-directory").innerHTML = `<option value="${escapeHtml(school.name)}"></option>`;
+				showToast("School logo saved in the school directory.");
+			} catch (error) { showToast(error.message); }
+			fileInput.value = "";
+		});
+		const logoModal = document.getElementById("logo-modal");
+		document.getElementById("search-school-logo").addEventListener("click", () => {
+			if (!schoolNameInput.value.trim()) { showToast("Enter the school name first."); schoolNameInput.focus(); return; }
+			document.getElementById("logo-school-name").textContent = schoolNameInput.value.trim();
+			logoModal.hidden = false;
+			document.querySelector('#logo-lookup-form [name="domain"]').focus();
+		});
+		document.getElementById("close-logo-modal").addEventListener("click", () => { logoModal.hidden = true; });
+		logoModal.addEventListener("click", event => { if (event.target === logoModal) logoModal.hidden = true; });
+		document.getElementById("logo-lookup-form").addEventListener("submit", async event => {
+			event.preventDefault();
+			const form = event.currentTarget;
+			const domain = new FormData(form).get("domain").trim();
+			try {
+				const { school } = await requestApi("/api/schools/logos/lookup", { method: "POST", body: JSON.stringify({ schoolName: schoolNameInput.value.trim(), domain }) });
+				setSchoolLogo(school.name, school.logo);
+				document.getElementById("school-directory").innerHTML = `<option value="${escapeHtml(school.name)}"></option>`;
+				logoModal.hidden = true;
+				form.reset();
+				showToast("Website icon saved. Check that it’s the right school logo.");
+			} catch (error) { showToast(error.message); }
+		});
+
+		registerList.addEventListener("click", async event => {
+			const shareButton = event.target.closest("[data-share]");
+			if (shareButton) { await openShareDialog(shareButton.dataset.share); return; }
+			const button = event.target.closest("[data-delete]");
+			if (!button) return;
+			const student = students.find(record => record.id === button.dataset.delete);
+			if (!student || !confirm(`Delete ${student.studentName} and their report cards from the school server?`)) return;
+			try {
+				await requestApi(`/api/students/${encodeURIComponent(student.id)}`, { method: "DELETE" });
+				await refreshWorkspace();
+				showToast("Student and reports deleted.");
+			} catch (error) { showToast(error.message); }
+		});
+
+		document.getElementById("export-button").addEventListener("click", () => {
+			if (!students.length) { showToast("Register a student before exporting."); return; }
+			const columns = ["Student ID", "School", "Student name", "Age", "Class", "District", "Guardian name", "Guardian phone", "Guardian email"];
+			const csvCell = value => `"${String(value).replace(/"/g, '""')}"`;
+			const rows = students.map(student => [student.id, student.school, student.studentName, student.age, student.className, student.district, student.guardianName, student.guardianPhone, student.guardianEmail || ""]);
+			const csv = [columns, ...rows].map(row => row.map(csvCell).join(",")).join("\r\n");
+			const url = URL.createObjectURL(new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" }));
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = "salone-student-register.csv";
+			link.click();
+			URL.revokeObjectURL(url);
+			showToast("Register exported as CSV.");
+		});
+
+		document.getElementById("print-button").addEventListener("click", () => window.print());
+
+		const reportStudentSelect = document.getElementById("report-student");
+		const subjectRows = document.getElementById("subject-rows");
+		const subjectTemplates = {
+			primary: ["English Language", "Mathematics", "Integrated Science", "Social Studies", "Civic Education", "Religious and Moral Education", "Physical and Health Education", "Creative Arts", "Agriculture", "ICT"],
+			junior: ["English Language", "Mathematics", "Integrated Science", "Social Studies", "Civic Education", "Religious and Moral Education", "Physical and Health Education", "Agriculture", "Business Studies", "ICT", "French"],
+			senior: ["English Language", "Mathematics", "Biology", "Chemistry", "Physics", "Economics", "Government", "Geography", "History", "Literature in English", "Accounting", "ICT"]
+		};
+
+		function studentLevel(student) {
+			if (student.className.startsWith("SSS ")) return "senior";
+			if (student.className.startsWith("JSS ")) return "junior";
+			return "primary";
+		}
+
+		function renderSubjectRows(subjects) {
+			subjectRows.innerHTML = subjects.map(subject => `<div class="score-row"><input class="subject-name-input" aria-label="Subject name" maxlength="60" value="${escapeHtml(subject)}"><input class="subject-score" type="number" min="0" max="100" step="1" aria-label="${escapeHtml(subject)} score out of 100"><button class="remove-subject" type="button" aria-label="Remove ${escapeHtml(subject)}" title="Remove subject"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14"></path></svg></button></div>`).join("");
+			updateScoreSummary();
+		}
+
+		function renderReportStudents(preferredId) {
+			const writableStudents = students.filter(student => student.access !== "view");
+			const currentId = preferredId || reportStudentSelect.value;
+			if (!writableStudents.length) {
+				reportStudentSelect.innerHTML = `<option value="">${students.length ? "View-only shared records" : "Register a student first"}</option>`;
+				reportStudentSelect.disabled = true;
+				document.getElementById("save-report").disabled = true;
+				subjectRows.innerHTML = students.length ? '<div class="disabled-help">These records are view-only. Ask the owner to grant report-edit access.</div>' : '<div class="disabled-help">Register a learner to start a report card.</div>';
+				updateScoreSummary();
+				return;
+			}
+			reportStudentSelect.disabled = false;
+			document.getElementById("save-report").disabled = false;
+			reportStudentSelect.innerHTML = '<option value="">Choose a student</option>' + writableStudents.map(student => `<option value="${escapeHtml(student.id)}">${escapeHtml(student.studentName)} · ${escapeHtml(student.className)}</option>`).join("");
+			const selected = writableStudents.find(student => student.id === currentId) || writableStudents[0];
+			reportStudentSelect.value = selected.id;
+			document.getElementById("report-teacher-name").value = currentTeacher?.displayName || "";
+			renderSubjectRows(subjectTemplates[studentLevel(selected)]);
+		}
+
+		function updateScoreSummary() {
+			const entered = Array.from(subjectRows.querySelectorAll(".subject-score"), input => input.value === "" ? null : Number(input.value)).filter(score => score !== null && Number.isFinite(score));
+			const total = entered.reduce((sum, score) => sum + score, 0);
+			document.getElementById("calculated-total").textContent = total;
+			document.getElementById("calculated-average").textContent = `${entered.length ? (total / entered.length).toFixed(2) : "0.00"} / 100`;
+		}
+
+		function renderReportHistory() {
+			const history = document.getElementById("report-history");
+			if (!reports.length) {
+				history.innerHTML = '<div class="empty-register"><strong>No report cards yet</strong><span>Saved student reports will appear here.</span></div>';
+				return;
+			}
+			history.innerHTML = reports.map(report => {
+				const access = students.find(student => student.id === report.studentId)?.access;
+				const deleteAction = access === "view" ? "" : `<button class="delete-student" type="button" data-delete-report="${escapeHtml(report.id)}" aria-label="Delete report for ${escapeHtml(report.studentName)}" title="Delete report"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6"></path></svg></button>`;
+				return `<div class="report-history-row"><div class="report-person">${escapeHtml(report.studentName)}<span class="report-meta">${escapeHtml(report.term)} · ${escapeHtml(report.academicYear)} · ${escapeHtml(report.className)}</span></div><span class="report-average">${Number(report.average).toFixed(2)}%</span><button class="report-action" type="button" data-open-report="${escapeHtml(report.id)}">View</button>${deleteAction}</div>`;
+			}).join("");
+		}
+
+		function reportMessage(report) {
+			const scoreLines = report.scores.map(item => `${item.subject}: ${item.score}/100`).join("\n");
+			return `${report.school}\nStudent report card\nStudent: ${report.studentName}\nClass: ${report.className}\n${report.term} · ${report.academicYear}\n\n${scoreLines}\n\nTotal: ${report.total}/${report.scores.length * 100}\nAverage: ${Number(report.average).toFixed(2)}/100`;
+		}
+
+		function configureReportSharing(report) {
+			const student = students.find(record => record.id === report.studentId);
+			const message = reportMessage(report);
+			const emailButton = document.getElementById("share-email");
+			const whatsappButton = document.getElementById("share-whatsapp");
+			if (student?.guardianEmail) {
+				const subject = `${report.school} report card for ${report.studentName}`;
+				emailButton.href = `mailto:${encodeURIComponent(student.guardianEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+				emailButton.hidden = false;
+			} else {
+				emailButton.removeAttribute("href");
+				emailButton.hidden = true;
+			}
+			if (student?.guardianPhone) {
+				let phone = student.guardianPhone.replace(/\D/g, "");
+				if (phone.startsWith("0")) phone = `232${phone.slice(1)}`;
+				else if (!phone.startsWith("232") && phone.length <= 8) phone = `232${phone}`;
+				whatsappButton.href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+				whatsappButton.hidden = false;
+			} else {
+				whatsappButton.removeAttribute("href");
+				whatsappButton.hidden = true;
+			}
+		}
+
+		async function fetchReportPdf(reportId) {
+			const response = await fetch(`/api/reports/${encodeURIComponent(reportId)}/pdf`, { credentials: "same-origin" });
+			if (response.status === 401 && currentTeacher) void closeSession("Your 30-minute idle session ended. Sign in again.");
+			if (!response.ok) {
+				const error = await response.json().catch(() => ({}));
+				throw new Error(error.error || "Could not prepare the report PDF.");
+			}
+			return response.blob();
+		}
+
+		function downloadPdfBlob(blob, report) {
+			const link = document.createElement("a");
+			const url = URL.createObjectURL(blob);
+			link.href = url;
+			link.download = `salone-report-${report.studentId}.pdf`;
+			link.click();
+			setTimeout(() => URL.revokeObjectURL(url), 60_000);
+		}
+
+		async function downloadReportPdf() {
+			const report = reports.find(item => item.id === currentPreviewReportId);
+			if (!report) return;
+			try {
+				const blob = await fetchReportPdf(report.id);
+				downloadPdfBlob(blob, report);
+				showToast("Report PDF downloaded.");
+			} catch (error) { showToast(error.message); }
+		}
+
+		async function shareReportPdf() {
+			const report = reports.find(item => item.id === currentPreviewReportId);
+			if (!report) return;
+			const confirmed = confirm(`Share ${report.studentName}'s report card with another app or person? It contains the student's name, class, and marks.`);
+			if (!confirmed) return;
+			try {
+				const blob = await fetchReportPdf(report.id);
+				const file = new File([blob], `salone-report-${report.studentId}.pdf`, { type: "application/pdf" });
+				if (navigator.share && navigator.canShare?.({ files: [file] })) {
+					try {
+						await navigator.share({ files: [file], title: `${report.studentName} report card`, text: `${report.term} · ${report.academicYear}` });
+						return;
+					} catch (error) {
+						if (error.name === "AbortError") return;
+					}
+				}
+				downloadPdfBlob(blob, report);
+				showToast("This browser cannot share files directly. The PDF was downloaded so you can attach it.");
+			} catch (error) {
+				if (error.name !== "AbortError") showToast(error.message);
+			}
+		}
+
+		async function showReport(report) {
+			currentPreviewReportId = report.id;
+			const rows = report.scores.map(item => `<tr><td>${escapeHtml(item.subject)}</td><td>${Number(item.score)} / 100</td></tr>`).join("");
+			let schoolLogo = activeSchoolLogoName.toLocaleLowerCase() === report.school.toLocaleLowerCase() ? activeSchoolLogo : "";
+			if (!schoolLogo) {
+				try {
+					const params = new URLSearchParams({ q: report.school });
+					const { schools } = await requestApi(`/api/schools?${params}`);
+					schoolLogo = schools.find(school => school.name.toLocaleLowerCase() === report.school.toLocaleLowerCase())?.logo || "";
+				} catch { /* Reports remain usable if no matching logo exists. */ }
+			}
+			const logoMarkup = schoolLogo ? `<img class="sheet-school-logo" src="${schoolLogo}" alt="${escapeHtml(report.school)} logo">` : "";
+			const teacherName = report.teacherName || "Not entered";
+			const headTeacherName = report.headTeacherName || "Not entered";
+			document.getElementById("report-sheet").innerHTML = `<header class="sheet-head"><div class="sheet-school-brand">${logoMarkup}<div><div class="sheet-brand">SALONE REGISTER · STUDENT REPORT</div><h3>${escapeHtml(report.school)}</h3><p>Academic performance report</p></div></div><div class="sheet-term">${escapeHtml(report.term)}<span>Academic year ${escapeHtml(report.academicYear)}</span></div></header><div class="sheet-student"><div><span>Student name</span><strong>${escapeHtml(report.studentName)}</strong></div><div><span>Student ID</span><strong>${escapeHtml(report.studentId)}</strong></div><div><span>Class</span><strong>${escapeHtml(report.className)}</strong></div></div><table class="subject-table"><thead><tr><th>Subject</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table><div class="sheet-totals"><div class="sheet-total"><span>Total score · ${report.scores.length} subjects</span><strong>${Number(report.total)} / ${report.scores.length * 100}</strong></div><div class="sheet-total"><span>Average score</span><strong>${Number(report.average).toFixed(2)} / 100</strong></div></div><div class="sheet-signatures"><div><span class="signature-entry" aria-hidden="true"></span>Class teacher<strong>${escapeHtml(teacherName)}</strong></div><div><span class="signature-entry" aria-hidden="true"></span>Head teacher<strong>${escapeHtml(headTeacherName)}</strong></div></div>`;
+			configureReportSharing(report);
+			document.getElementById("report-preview").hidden = false;
+			document.getElementById("report-preview").scrollIntoView({ behavior: "smooth", block: "start" });
+		}
+
+		reportStudentSelect.addEventListener("change", () => {
+			const student = students.find(record => record.id === reportStudentSelect.value);
+			if (student) renderSubjectRows(subjectTemplates[studentLevel(student)]);
+		});
+		subjectRows.addEventListener("input", updateScoreSummary);
+		subjectRows.addEventListener("click", event => {
+			const button = event.target.closest(".remove-subject");
+			if (!button) return;
+			if (subjectRows.querySelectorAll(".score-row").length <= 1) { showToast("A report needs at least one subject."); return; }
+			button.closest(".score-row").remove();
+			updateScoreSummary();
+		});
+		document.getElementById("add-subject").addEventListener("click", () => {
+			subjectRows.insertAdjacentHTML("beforeend", `<div class="score-row"><input class="subject-name-input" aria-label="Subject name" maxlength="60" value="Additional subject"><input class="subject-score" type="number" min="0" max="100" step="1" aria-label="Additional subject score out of 100"><button class="remove-subject" type="button" aria-label="Remove subject" title="Remove subject"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14"></path></svg></button></div>`);
+		});
+		document.getElementById("report-form").addEventListener("submit", async event => {
+			event.preventDefault();
+			const student = students.find(record => record.id === reportStudentSelect.value);
+			if (!student) { showToast("Register a student before preparing a report."); return; }
+			const scores = Array.from(subjectRows.querySelectorAll(".score-row"), row => {
+				const scoreValue = row.querySelector(".subject-score").value;
+				if (scoreValue === "") return null;
+				return { subject: row.querySelector(".subject-name-input").value.trim(), score: Number(scoreValue) };
+			}).filter(item => item !== null);
+			if (!scores.length) { showToast("Enter a score for at least one subject."); return; }
+			if (scores.some(item => !item.subject || !Number.isFinite(item.score) || item.score < 0 || item.score > 100)) {
+				showToast("Each entered score needs a subject name and must be between 0 and 100.");
+				return;
+			}
+			const data = new FormData(event.currentTarget);
+			try {
+				const { report } = await requestApi("/api/reports", { method: "POST", body: JSON.stringify({ studentId: student.id, term: data.get("term"), academicYear: data.get("academicYear").trim(), teacherName: data.get("teacherName").trim(), headTeacherName: data.get("headTeacherName").trim(), scores }) });
+				await refreshWorkspace();
+				await showReport(report);
+				showToast("Report card saved.");
+			} catch (error) { showToast(error.message); }
+		});
+		document.getElementById("report-history").addEventListener("click", async event => {
+			const openButton = event.target.closest("[data-open-report]");
+			if (openButton) {
+				const report = reports.find(item => item.id === openButton.dataset.openReport);
+				if (report) await showReport(report);
+				return;
+			}
+			const deleteButton = event.target.closest("[data-delete-report]");
+			if (!deleteButton) return;
+			try {
+				await requestApi(`/api/reports/${encodeURIComponent(deleteButton.dataset.deleteReport)}`, { method: "DELETE" });
+				await refreshWorkspace();
+				document.getElementById("report-preview").hidden = true;
+				showToast("Report card deleted.");
+			} catch (error) { showToast(error.message); }
+		});
+		document.getElementById("share-report-pdf").addEventListener("click", shareReportPdf);
+		document.getElementById("download-report-pdf").addEventListener("click", downloadReportPdf);
+		document.getElementById("print-report").addEventListener("click", () => window.print());
+
+		function renderAuthMode(mode) {
+			authMode = mode;
+			const setup = mode === "setup";
+			const signup = mode === "signup";
+			const offline = mode === "offline";
+			document.getElementById("auth-title").textContent = setup ? "Set up the first teacher" : signup ? "Create teacher account" : "Sign in";
+			document.getElementById("auth-description").textContent = setup ? "Create Jonathan Decker’s account on the server computer to begin." : signup ? "Each teacher starts with a private workspace. Share student records only when needed." : "Sign in to access your private student register and report cards.";
+			document.getElementById("auth-name-field").hidden = !(setup || signup);
+			document.getElementById("auth-setup-token-field").hidden = !setup;
+			document.getElementById("auth-confirm-field").hidden = !(setup || signup);
+			document.getElementById("auth-display-name").required = setup || signup;
+			document.getElementById("auth-confirm-password").required = setup || signup;
+			document.getElementById("auth-submit").textContent = setup ? "Create first account" : signup ? "Create account" : "Sign in";
+			document.getElementById("auth-submit").disabled = offline;
+			document.getElementById("auth-switch").hidden = setup || offline;
+			document.getElementById("auth-switch").textContent = signup ? "Already have an account? Sign in" : "New teacher? Create an account";
+			document.getElementById("auth-password").autocomplete = setup || signup ? "new-password" : "current-password";
+			if (setup) {
+				document.getElementById("auth-display-name").value = "Jonathan Decker";
+				document.getElementById("auth-username").value = "jonathan.decker";
+				document.getElementById("auth-note").textContent = "On a hosted server, enter the one-time setup key configured by the server administrator. Use a unique password of at least 12 characters.";
+			} else if (offline) {
+				document.getElementById("auth-title").textContent = "Secure server unavailable";
+				document.getElementById("auth-description").textContent = "Start Salone Register on the server, then open its local web address to sign in.";
+				document.getElementById("auth-note").textContent = "Run npm start from the project folder and open http://127.0.0.1:4173.";
+			} else {
+				document.getElementById("auth-note").textContent = "Your records are private to your account. Shared student records are visible only to teachers you authorize.";
+			}
+		}
+
+		function showAuthError(message) {
+			document.getElementById("auth-error").textContent = message;
+		}
+
+		async function enterWorkspace(teacher) {
+			currentTeacher = teacher;
+			offlineMode = false;
+			document.getElementById("teacher-name").textContent = `${teacher.displayName} · @${teacher.username}`;
+			schoolNameInput.value = teacher.schoolName || "";
+			document.getElementById("auth-screen").hidden = true;
+			document.getElementById("app-shell").hidden = false;
+			try {
+				await refreshWorkspace();
+				document.getElementById("report-teacher-name").value = teacher.displayName;
+				if (!offlineMode) {
+					await findSchoolLogo(schoolNameInput.value);
+					startSessionTracking();
+				}
+			} catch (error) {
+				await closeSession(error.message);
+			}
+		}
+
+		document.getElementById("auth-form").addEventListener("submit", async event => {
+			event.preventDefault();
+			showAuthError("");
+			const username = document.getElementById("auth-username").value.trim();
+			const password = document.getElementById("auth-password").value;
+			const confirmPassword = document.getElementById("auth-confirm-password").value;
+			if ((authMode === "setup" || authMode === "signup") && password !== confirmPassword) {
+				showAuthError("The passwords do not match.");
+				return;
+			}
+			const endpoint = authMode === "setup" ? "/api/auth/setup" : authMode === "signup" ? "/api/auth/signup" : "/api/auth/login";
+			const body = authMode === "login" ? { username, password } : { displayName: document.getElementById("auth-display-name").value.trim(), username, password, ...(authMode === "setup" ? { setupToken: document.getElementById("auth-setup-token").value } : {}) };
+			const submitButton = document.getElementById("auth-submit");
+			submitButton.disabled = true;
+			try {
+				const { teacher } = await requestApi(endpoint, { method: "POST", body: JSON.stringify(body) });
+				document.getElementById("auth-password").value = "";
+				document.getElementById("auth-confirm-password").value = "";
+				document.getElementById("auth-setup-token").value = "";
+				await enterWorkspace(teacher);
+			} catch (error) {
+				showAuthError(error.message);
+			} finally {
+				submitButton.disabled = false;
+			}
+		});
+
+		document.getElementById("auth-switch").addEventListener("click", () => {
+			renderAuthMode(authMode === "signup" ? "login" : "signup");
+			showAuthError("");
+		});
+
+		const activityEvents = ["pointerdown", "keydown", "input", "touchstart", "scroll"];
+		function noteActivity() {
+			lastActivity = Date.now();
+			clearTimeout(idleTimer);
+			idleTimer = setTimeout(() => void closeSession("You were signed out after 30 minutes without activity."), 30 * 60 * 1000);
+			if (Date.now() - lastHeartbeat >= 60_000) refreshSession();
+		}
+
+		async function refreshSession() {
+			lastHeartbeat = Date.now();
+			try {
+				const result = await requestApi("/api/auth/me");
+				currentTeacher = result.teacher;
+			} catch { /* Session expiry is handled by requestApi. */ }
+		}
+
+		function startSessionTracking() {
+			lastActivity = Date.now();
+			lastHeartbeat = Date.now();
+			clearTimeout(idleTimer);
+			idleTimer = setTimeout(() => void closeSession("You were signed out after 30 minutes without activity."), 30 * 60 * 1000);
+			activityEvents.forEach(type => document.addEventListener(type, noteActivity, { passive: true }));
+			heartbeatTimer = setInterval(() => {
+				if (Date.now() - lastActivity < 60_000 && Date.now() - lastHeartbeat >= 60_000) void refreshSession();
+			}, 30_000);
+		}
+
+		function stopSessionTracking() {
+			clearTimeout(idleTimer);
+			clearInterval(heartbeatTimer);
+			activityEvents.forEach(type => document.removeEventListener(type, noteActivity));
+		}
+
+		let closingSession = false;
+		async function closeSession(message = "") {
+			if (closingSession) return;
+			closingSession = true;
+			localStorage.removeItem(workspaceSnapshotKey);
+			stopSessionTracking();
+			currentTeacher = null;
+			students = [];
+			reports = [];
+			try { await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" }); } catch { /* Clear the local workspace even if offline. */ }
+			document.getElementById("registration-form").reset();
+			document.getElementById("report-form").reset();
+			schoolNameInput.value = "";
+			setSchoolLogo("", "");
+			document.getElementById("school-directory").replaceChildren();
+			document.getElementById("school-logo-file").value = "";
+			document.getElementById("register-search").value = "";
+			searchTerm = "";
+			subjectRows.innerHTML = "";
+			document.getElementById("report-preview").hidden = true;
+			document.getElementById("report-sheet").innerHTML = "";
+			document.getElementById("share-email").hidden = true;
+			document.getElementById("share-whatsapp").hidden = true;
+			document.getElementById("share-form").reset();
+			document.getElementById("share-list").innerHTML = "";
+			sharingStudentId = "";
+			logoModal.hidden = true;
+			document.getElementById("teacher-name").textContent = "";
+			document.getElementById("toast").textContent = "";
+			document.getElementById("toast").classList.remove("show");
+			renderRegister();
+			renderReportStudents();
+			renderReportHistory();
+			document.getElementById("share-modal").hidden = true;
+			document.getElementById("app-shell").hidden = true;
+			document.getElementById("auth-screen").hidden = false;
+			document.getElementById("auth-password").value = "";
+			renderAuthMode("login");
+			showAuthError(message);
+			closingSession = false;
+		}
+
+		document.getElementById("logout-button").addEventListener("click", () => void closeSession("You have signed out."));
+		const installButton = document.getElementById("install-app");
+		const assistantToggle = document.getElementById("assistant-toggle");
+		const assistantPanel = document.getElementById("assistant-panel");
+		const assistantClose = document.getElementById("assistant-close");
+		const assistantForm = document.getElementById("assistant-form");
+		const assistantInput = document.getElementById("assistant-input");
+		const installedAsApp = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+		if (installedAsApp) installButton.hidden = true;
+		assistantToggle.addEventListener("click", () => {
+			assistantPanel.hidden = !assistantPanel.hidden;
+			if (!assistantPanel.hidden) {
+				ensureAssistantGreeting();
+				assistantInput.focus();
+			}
+		});
+		assistantClose.addEventListener("click", () => { assistantPanel.hidden = true; });
+		assistantPanel.addEventListener("keydown", event => {
+			if (event.key === "Escape") assistantPanel.hidden = true;
+		});
+		document.querySelectorAll(".assistant-suggestion").forEach(button => button.addEventListener("click", () => {
+			handleAssistantQuestion(button.dataset.question);
+		}));
+		assistantForm.addEventListener("submit", event => {
+			event.preventDefault();
+			handleAssistantQuestion(assistantInput.value);
+			assistantInput.value = "";
+		});
+		window.addEventListener("online", updateNetworkStatus);
+		window.addEventListener("offline", updateNetworkStatus);
+		window.addEventListener("beforeinstallprompt", event => {
+			event.preventDefault();
+			installPromptEvent = event;
+		});
+		window.addEventListener("appinstalled", () => {
+			installPromptEvent = null;
+			installButton.hidden = true;
+			showToast("Salone Register was added to your phone.");
+		});
+		installButton.addEventListener("click", async () => {
+			if (!window.isSecureContext) {
+				showToast("Install requires HTTPS. LAN mode is for testing only.");
+				return;
+			}
+			const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+			if (isIos) {
+				showToast("In Safari, tap Share, then Add to Home Screen.");
+				return;
+			}
+			if (!installPromptEvent) {
+				showToast("Open your browser menu and choose Install app or Add to Home Screen.");
+				return;
+			}
+			await installPromptEvent.prompt();
+			installPromptEvent = null;
+		});
+
+		async function initializeApplication() {
+			try {
+				const sessionResponse = await fetch("/api/auth/me", { credentials: "same-origin" });
+				if (sessionResponse.ok) {
+					const session = await sessionResponse.json();
+					if (session.authenticated && session.teacher) {
+						await enterWorkspace(session.teacher);
+						return;
+					}
+				}
+				const setupResponse = await fetch("/api/setup-status", { credentials: "same-origin" });
+				if (!setupResponse.ok) throw new Error("Secure server is not responding.");
+				const { setupRequired } = await setupResponse.json();
+				renderAuthMode(setupRequired ? "setup" : "login");
+			} catch {
+				const snapshot = loadWorkspaceSnapshot();
+				if (snapshot) {
+					await enterWorkspace(snapshot.teacher);
+					return;
+				}
+				renderAuthMode("offline");
+				showAuthError("Connect to the Salone Register server once to enable offline access.");
+			}
+			updateNetworkStatus();
+		}
+
+		async function renderShareList() {
+			const list = document.getElementById("share-list");
+			try {
+				const { shares } = await requestApi(`/api/students/${encodeURIComponent(sharingStudentId)}/shares`);
+				list.innerHTML = shares.length ? shares.map(share => `<div class="share-entry"><span>${escapeHtml(share.displayName)}<small>@${escapeHtml(share.username)} · ${share.permission === "edit" ? "Can prepare reports" : "View only"}</small></span><button class="share-revoke" type="button" data-revoke-share="${share.teacherId}">Revoke</button></div>`).join("") : '<div class="share-entry">No teachers have access yet.</div>';
+			} catch (error) { list.textContent = error.message; }
+		}
+
+		async function openShareDialog(studentId) {
+			const student = students.find(record => record.id === studentId);
+			if (!student || student.access !== "owner") return;
+			sharingStudentId = studentId;
+			document.getElementById("share-student-name").textContent = `${student.studentName} · ${student.className}`;
+			document.getElementById("share-modal").hidden = false;
+			await renderShareList();
+			document.querySelector('#share-form [name="username"]').focus();
+		}
+
+		document.getElementById("share-form").addEventListener("submit", async event => {
+			event.preventDefault();
+			const form = event.currentTarget;
+			const data = new FormData(form);
+			try {
+				await requestApi(`/api/students/${encodeURIComponent(sharingStudentId)}/shares`, { method: "POST", body: JSON.stringify({ username: data.get("username").trim(), permission: data.get("permission") }) });
+				form.reset();
+				await renderShareList();
+				showToast("Teacher access updated.");
+			} catch (error) { showToast(error.message); }
+		});
+		document.querySelector('#share-form [name="username"]').addEventListener("input", event => searchTeachers(event.currentTarget.value));
+
+		document.getElementById("share-list").addEventListener("click", async event => {
+			const button = event.target.closest("[data-revoke-share]");
+			if (!button) return;
+			try {
+				await requestApi(`/api/students/${encodeURIComponent(sharingStudentId)}/shares/${button.dataset.revokeShare}`, { method: "DELETE" });
+				await renderShareList();
+				showToast("Teacher access revoked.");
+			} catch (error) { showToast(error.message); }
+		});
+
+		function closeShareDialog() { document.getElementById("share-modal").hidden = true; }
+		document.getElementById("close-share").addEventListener("click", closeShareDialog);
+		document.getElementById("share-modal").addEventListener("click", event => { if (event.target.id === "share-modal") closeShareDialog(); });
+		document.addEventListener("keydown", event => {
+			if (event.key === "Escape" && !document.getElementById("share-modal").hidden) closeShareDialog();
+			if (event.key === "Escape" && !logoModal.hidden) logoModal.hidden = true;
+		});
+
+		initializeApplication();
+	</script>
+</body>
+</html>
