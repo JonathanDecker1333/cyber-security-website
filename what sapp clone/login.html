@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SYX Login</title>
+    <style>
+      :root {
+        --bg: #0d0d0d;
+        --panel: #161613;
+        --line: #2d2a24;
+        --gold: #d4af37;
+        --text: #f6f3eb;
+        --muted: #b9b2a4;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: grid;
+        padding: 24px 16px;
+        place-items: center;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      .auth-shell {
+        width: min(100%, 470px);
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 28px 22px;
+      }
+      .auth-brand { display: block; margin-bottom: 22px; color: var(--gold); font-size: 2.2rem; font-weight: 900; letter-spacing: 0.08em; text-decoration: none; }
+      h1 { margin: 0 0 10px; font-size: 2rem; }
+      p { margin: 0 0 20px; color: var(--muted); }
+      form { display: grid; gap: 14px; }
+      label { display: grid; gap: 8px; color: var(--muted); font-size: 0.9rem; }
+      input {
+        width: 100%;
+        background: #141410;
+        border: 1px solid var(--line);
+        color: var(--text);
+        padding: 12px 14px;
+        border-radius: 10px;
+      }
+      button {
+        border: 0;
+        border-radius: 10px;
+        background: var(--gold);
+        color: #170f05;
+        padding: 12px 18px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .link-text {
+        margin-top: 14px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .link-text a { color: var(--gold); }
+      .error { color: #ff8b8b; font-size: 0.85rem; min-height: 20px; }
+      @media (max-width: 420px) { body { padding: 18px 12px; } .auth-shell { padding: 24px 18px 20px; } h1 { font-size: 1.65rem; } }
+    </style>
+  </head>
+  <body>
+    <div class="auth-shell">
+      <a class="auth-brand" href="/">SYX</a>
+      <h1>Welcome back</h1>
+      <p>Log in with the phone number, email, or username on your account and your password.</p>
+      <form id="loginForm">
+        <label>
+          Email, phone number, or username
+          <input type="text" id="identifier" name="identifier" placeholder="Email, phone, or @username" required />
+        </label>
+        <label>
+          Password
+          <input type="password" id="password" name="password" placeholder="••••••••" required />
+        </label>
+        <div id="loginError" class="error"></div>
+        <button type="submit">Log in</button>
+      </form>
+      <div class="link-text">New to SYX? <a href="/signup.html">Create an account</a></div>
+    </div>
+
+    <script>
+      const form = document.getElementById('loginForm');
+      const errorBox = document.getElementById('loginError');
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        errorBox.textContent = '';
+
+        const payload = {
+          identifier: document.getElementById('identifier').value,
+          password: document.getElementById('password').value,
+        };
+
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          errorBox.textContent = data.message || 'Login failed.';
+          return;
+        }
+
+        window.location.href = '/';
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SYX Sign Up</title>
+    <style>
+      :root {
+        --bg: #0d0d0d;
+        --panel: #161613;
+        --line: #302d24;
+        --gold: #d4af37;
+        --gold-soft: #f4d66d;
+        --text: #f3eee0;
+        --muted: #aaa597;
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body {
+        display: grid;
+        min-height: 100vh;
+        min-height: 100dvh;
+        margin: 0;
+        padding: 30px 16px;
+        place-items: center;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      button, input { font: inherit; }
+      button { cursor: pointer; }
+      button:focus-visible, input:focus-visible { outline: 2px solid var(--gold-soft); outline-offset: 2px; }
+      .auth-shell {
+        width: min(100%, 470px);
+        padding: 30px 26px 24px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+      }
+      .auth-brand { color: var(--gold); font-size: 2.2rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+      h1 { margin: 19px 0 7px; font-size: 1.9rem; }
+      .auth-intro { margin: 0 0 22px; color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
+      .auth-panel form { display: grid; gap: 14px; }
+      .auth-panel label { display: grid; gap: 7px; color: var(--muted); font-size: 0.82rem; }
+      .auth-panel input {
+        width: 100%;
+        min-height: 43px;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #10100e;
+        color: var(--text);
+      }
+      .auth-panel input::placeholder { color: #777368; }
+      .phone-hint { color: var(--muted); font-size: 0.74rem; line-height: 1.4; }
+      .password-control { position: relative; }
+      .password-control input { padding-right: 50px; }
+      .password-toggle { position: absolute; top: 50%; right: 5px; display: grid; width: 34px; height: 34px; padding: 0; transform: translateY(-50%); place-items: center; border: 0; background: transparent; color: var(--muted); }
+      .password-toggle svg { width: 19px; height: 19px; }
+      .auth-submit { min-height: 43px; border: 1px solid var(--gold); border-radius: 7px; background: var(--gold); color: #17130a; font-weight: 800; }
+      .error { min-height: 18px; color: #ff9691; font-size: 0.8rem; }
+      .link-text { margin: 21px 0 0; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); text-align: center; font-size: 0.82rem; }
+      .link-text a { color: var(--gold-soft); }
+      @media (max-width: 420px) { body { padding: 18px 12px; } .auth-shell { padding: 24px 18px 20px; } h1 { font-size: 1.65rem; } }
+    </style>
+  </head>
+  <body>
+    <main class="auth-shell">
+      <a class="auth-brand" href="/">SYX</a>
+      <h1>Create your account</h1>
+      <p class="auth-intro">Join your people with a phone number or email and a password.</p>
+
+      <section class="auth-panel">
+        <form id="legacySignupForm">
+          <label>Full name<input type="text" id="emailFullName" maxlength="100" autocomplete="name" placeholder="Your full name" required /></label>
+          <label>Username<input type="text" id="username" autocomplete="username" placeholder="yourhandle" required /></label>
+          <label>Phone number or email<input type="text" id="contact" autocomplete="username" placeholder="Enter your phone number or email" required /><small class="phone-hint">Local Sierra Leone phone numbers work without +232.</small></label>
+          <label>Password<div class="password-control"><input type="password" id="password" minlength="6" autocomplete="new-password" placeholder="At least 6 characters" required /><button class="password-toggle" type="button" data-targets="password confirmPassword" aria-label="Show passwords" aria-pressed="false"><svg data-icon="eye" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 10.75 10.75 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg><svg data-icon="eye-off" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M10.58 10.58a2 2 0 0 0 2.83 2.83"/><path d="M16.68 16.68A10.94 10.94 0 0 1 12 17.5c-5 0-8.27-3.11-9.8-5.26a1 1 0 0 1 0-.48 11 11 0 0 1 3.2-3.84"/><path d="M9.88 4.24A10.94 10.94 0 0 1 12 4.5c5 0 8.27 3.11 9.8 5.26a1 1 0 0 1 0 .48 11 11 0 0 1-1.45 2.3"/><line x1="2" y1="2" x2="22" y2="22"/></svg></button></div></label>
+          <label>Confirm password<input type="password" id="confirmPassword" minlength="6" autocomplete="new-password" placeholder="Enter your password again" required /></label>
+          <div id="legacySignupError" class="error" role="alert" aria-live="polite"></div>
+          <button class="auth-submit" type="submit">Create account</button>
+        </form>
+      </section>
+
+      <p class="link-text">Already have an account? <a href="/login.html">Log in</a></p>
+    </main>
+
+    <script>
+      if (window.location.search) window.history.replaceState(null, document.title, window.location.pathname + window.location.hash);
+
+      const legacyForm = document.getElementById('legacySignupForm');
+      const legacyError = document.getElementById('legacySignupError');
+
+      legacyForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        legacyError.textContent = '';
+        const password = document.getElementById('password').value;
+        if (password !== document.getElementById('confirmPassword').value) {
+          legacyError.textContent = 'Passwords do not match.';
+          return;
+        }
+        try {
+          const response = await fetch('/api/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fullName: document.getElementById('emailFullName').value,
+              username: document.getElementById('username').value,
+              contact: document.getElementById('contact').value,
+              password,
+            }),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.message || 'Signup failed.');
+          window.location.href = '/';
+        } catch (error) {
+          legacyError.textContent = error.message || 'Could not reach the server. Please try again.';
+        }
+      });
+
+      document.querySelectorAll('.password-toggle').forEach((toggle) => {
+        toggle.addEventListener('click', () => {
+          const show = toggle.getAttribute('aria-pressed') !== 'true';
+          toggle.dataset.targets.split(' ').forEach((id) => {
+            document.getElementById(id).type = show ? 'text' : 'password';
+          });
+          toggle.setAttribute('aria-pressed', String(show));
+          toggle.setAttribute('aria-label', show ? 'Hide passwords' : 'Show passwords');
+          toggle.querySelector('[data-icon="eye"]').hidden = show;
+          toggle.querySelector('[data-icon="eye-off"]').hidden = !show;
+        });
+      });
+    </script>
+  </body>
+</html>
