@@ -23,6 +23,10 @@ The addresses above are local development URLs; they are not publicly hosted web
 For safety, this repository excludes `.env` files, local SQLite databases, generated build output, and `node_modules`.
 Do not commit passwords, API keys, or real user data.
 
+## GitHub Pages preview
+
+The GitHub Pages workflow publishes the Artifi AI assistant from `AI Project/artifi.html` at [the project GitHub Pages URL](https://jonathandecker1333.github.io/cyber-security-website/). Chat requires your own Gemini API key in the browser. The static preview does not run the Node.js backends for E-Market or Salone Register.
+
 ## Project-only subtree branches
 
 The monorepo keeps both projects on `main`; these branches contain only the named project, with that project's files at the branch root:

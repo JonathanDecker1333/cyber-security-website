@@ -30,6 +30,10 @@ test("serves the chat UI and reports installed local models", async t => {
   assert.equal(page.status, 200);
   assert.match(await page.text(), /D chart/);
 
+  const artifiPage = await fetch(`${appUrl}/artifi.html`);
+  assert.equal(artifiPage.status, 200);
+  assert.match(await artifiPage.text(), /ARTIFI/);
+
   const status = await fetch(`${appUrl}/api/status`);
   assert.deepEqual(await status.json(), { available: true, models: ["qwen2.5:3b"], defaultModel: "qwen2.5:3b" });
 });

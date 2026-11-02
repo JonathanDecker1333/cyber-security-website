@@ -53,8 +53,16 @@ export function createAppServer({ ollamaUrl = "http://127.0.0.1:11434", model = 
         if (!localHost || request.headers.origin !== `http://${host}`) throw new HttpError(403, "Cross-origin requests are not allowed.");
       }
       const url = new URL(request.url, "http://localhost");
+      if (url.pathname === "/artifi.html") {
+        response.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://generativelanguage.googleapis.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; media-src 'self' blob:; worker-src 'self' blob:; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
+      }
       if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/index.html")) {
         const html = await readFile(resolve(root, "index.html"));
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+        return response.end(html);
+      }
+      if (request.method === "GET" && url.pathname === "/artifi.html") {
+        const html = await readFile(resolve(root, "artifi.html"));
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
         return response.end(html);
       }
