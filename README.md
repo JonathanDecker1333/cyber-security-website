@@ -23,6 +23,13 @@ The addresses above are local development URLs; they are not publicly hosted web
 For safety, this repository excludes `.env` files, local SQLite databases, generated build output, and `node_modules`.
 Do not commit passwords, API keys, or real user data.
 
+## Project-only subtree branches
+
+The monorepo keeps both projects on `main`; these branches contain only the named project, with that project's files at the branch root:
+
+- [E-Market Website (`e-market-website`)](https://github.com/JonathanDecker1333/cyber-security-website/tree/e-market-website)
+- [Salone Register (`project`)](https://github.com/JonathanDecker1333/cyber-security-website/tree/project)
+
 ## Deploy the complete applications
 
 GitHub Pages can serve static files, but these apps need their Node.js backends and PostgreSQL databases. The root `render.yaml` describes two free Render web services:
