@@ -1,51 +1,89 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { once } from "node:events";
-import { spawn } from "node:child_process";
-import { createServer as createPortServer } from "node:http";
-import { mkdtemp, rm } from "node:fs/promises";
-import { join, resolve } from "node:path";
-import { tmpdir } from "node:os";
-import { DatabaseSync } from "node:sqlite";
+import { DataType, newDb } from "pg-mem";
 import test from "node:test";
+import { createApp } from "../server.mjs";
+import { createPool, migrateDatabase } from "../database.mjs";
 
-async function availablePort() {
-  const portServer = createPortServer();
-  portServer.listen(0, "127.0.0.1");
-  await once(portServer, "listening");
-  const { port } = portServer.address();
-  await new Promise((resolveClose, rejectClose) => portServer.close(error => error ? rejectClose(error) : resolveClose()));
-  return port;
-}
+test("PostgreSQL pool requires a PostgreSQL URL and verified TLS", async () => {
+  assert.throws(() => createPool({}), /DATABASE_URL is required/);
+  assert.throws(() => createPool({ DATABASE_URL: "https://example.test/db" }), /must use PostgreSQL/);
+  assert.throws(() => createPool({
+    DATABASE_URL: "postgresql://user:password@db.example.test/postgres",
+    NODE_ENV: "production",
+    DATABASE_SSL: "disable"
+  }), /not permitted in production/);
+  assert.throws(() => createPool({
+    DATABASE_URL: "postgresql://user:password@db.example.test/postgres",
+    DATABASE_POOL_MAX: "21"
+  }), /DATABASE_POOL_MAX/);
+
+  const pool = createPool({ DATABASE_URL: "postgresql://user:password@db.example.test/postgres?sslmode=require" });
+  assert.equal(new URL(pool.options.connectionString).searchParams.get("sslmode"), "verify-full");
+  assert.equal(pool.options.max, 5);
+  await pool.end();
+});
 
 test("teacher records stay private unless shared; idle sessions expire", { timeout: 20_000 }, async t => {
-  const directory = await mkdtemp(join(tmpdir(), "salone-register-test-"));
-  const databasePath = join(directory, "test.sqlite");
-  const port = await availablePort();
-  const origin = `http://127.0.0.1:${port}`;
-  const setupToken = "test-only-bootstrap-token-with-more-than-32-characters";
-  const child = spawn(process.execPath, [resolve("server.mjs")], {
-    cwd: process.cwd(),
-    env: { ...process.env, HOST: "127.0.0.1", PORT: String(port), APP_ORIGIN: origin, NODE_ENV: "test", SALONE_DB_PATH: databasePath, SETUP_TOKEN: setupToken },
-    stdio: ["ignore", "ignore", "pipe"]
+  const previousOrigin = process.env.APP_ORIGIN;
+  const previousNodeEnvironment = process.env.NODE_ENV;
+  process.env.NODE_ENV = "test";
+  const memoryDatabase = newDb();
+  memoryDatabase.public.registerFunction({
+    name: "pg_advisory_xact_lock",
+    args: [DataType.integer, DataType.integer],
+    returns: DataType.integer,
+    implementation: () => 0
   });
-  let serverErrors = "";
-  child.stderr.setEncoding("utf8").on("data", chunk => { serverErrors += chunk; });
+  memoryDatabase.public.registerFunction({
+    name: "trim",
+    args: [DataType.text],
+    returns: DataType.text,
+    implementation: value => value.trim()
+  });
+  const { Pool } = memoryDatabase.adapters.createPg();
+  const rawDatabase = new Pool();
+  await migrateDatabase(rawDatabase);
+  const logoBytes = new Map();
+  async function queryWithBinarySupport(client, sql, values = []) {
+    if (/INSERT INTO school_logos/i.test(sql)) logoBytes.set(values[1], Buffer.from(values[3]));
+    const result = await client.query(sql, values);
+    if (/FROM school_logos/i.test(sql)) {
+      const key = values[0]?.toLowerCase();
+      for (const row of result.rows) {
+        row.image_data = logoBytes.get(row.school_name_key || key || row.school_name?.toLowerCase()) || row.image_data;
+      }
+    }
+    return result;
+  }
+  const database = {
+    query: (sql, values) => queryWithBinarySupport(rawDatabase, sql, values),
+    connect: async () => {
+      const client = await rawDatabase.connect();
+      return {
+        query: (sql, values) => queryWithBinarySupport(client, sql, values),
+        release: () => client.release()
+      };
+    },
+    end: () => rawDatabase.end()
+  };
+  const server = createApp(database, { setupToken: "test-only-bootstrap-token-with-more-than-32-characters" });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const { port } = server.address();
+  const origin = `http://127.0.0.1:${port}`;
+  process.env.APP_ORIGIN = origin;
   t.after(async () => {
-    child.kill("SIGTERM");
-    if (child.exitCode === null) await once(child, "exit");
-    await rm(directory, { recursive: true, force: true });
+    process.env.APP_ORIGIN = previousOrigin;
+    process.env.NODE_ENV = previousNodeEnvironment;
+    await new Promise((resolveClose, rejectClose) => server.close(error => error ? rejectClose(error) : resolveClose()));
+    await database.end();
   });
 
-  let ready = false;
-  for (let attempt = 0; attempt < 80; attempt++) {
-    try {
-      const response = await fetch(`${origin}/api/setup-status`);
-      if (response.ok) { ready = true; break; }
-    } catch { /* Wait briefly for the child process to bind its port. */ }
-    await new Promise(resolveWait => setTimeout(resolveWait, 50));
-  }
-  assert.equal(ready, true, `server did not start: ${serverErrors}`);
+  const setupToken = "test-only-bootstrap-token-with-more-than-32-characters";
+  const ready = await fetch(`${origin}/api/setup-status`);
+  assert.equal(ready.status, 200);
 
   for (const [path, contentType] of [["/manifest.webmanifest", "application/manifest+json"], ["/icon.svg", "image/svg+xml"], ["/apple-touch-icon.png", "image/png"], ["/sw.js", "text/javascript"]]) {
     const asset = await fetch(`${origin}${path}`);
@@ -163,9 +201,7 @@ test("teacher records stay private unless shared; idle sessions expire", { timeo
 
   const rawToken = secondCookie.slice("salone_session=".length);
   const tokenHash = createHash("sha256").update(rawToken).digest("hex");
-  const database = new DatabaseSync(databasePath);
-  database.prepare("UPDATE sessions SET last_activity = ? WHERE token_hash = ?").run(Date.now() - 30 * 60 * 1000 - 1, tokenHash);
-  database.close();
+  await database.query("UPDATE sessions SET last_activity = $1 WHERE token_hash = $2", [Date.now() - 30 * 60 * 1000 - 1, tokenHash]);
   const expiredSession = await api("/api/auth/me", { cookie: secondCookie });
   assert.equal(expiredSession.status, 401);
   assert.match(expiredSession.setCookie, /Max-Age=0/);

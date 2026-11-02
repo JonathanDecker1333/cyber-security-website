@@ -3,9 +3,7 @@ set -euo pipefail
 
 APP_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 APP_URL="http://127.0.0.1:4173"
-DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
-APP_DATA_DIR="$DATA_HOME/salone-register"
 APP_STATE_DIR="$STATE_HOME/salone-register"
 LOG_FILE="$APP_STATE_DIR/server.log"
 PID_FILE="$APP_STATE_DIR/server.pid"
@@ -36,6 +34,10 @@ if (( node_major < 24 )); then
 	printf 'Node.js 24 or later is required; found Node.js %s.\n' "$(node --version)" >&2
 	exit 1
 fi
+if [[ -z "${DATABASE_URL:-}" ]]; then
+	printf 'Set DATABASE_URL to a PostgreSQL connection string before starting Salone Register.\n' >&2
+	exit 1
+fi
 
 if ! command -v curl >/dev/null 2>&1 || ! command -v xdg-open >/dev/null 2>&1; then
 	printf 'Install curl and xdg-utils to use the Linux desktop launcher.\n' >&2
@@ -47,8 +49,8 @@ if curl --silent --fail "$APP_URL/api/setup-status" >/dev/null 2>&1; then
 	exit 0
 fi
 
-mkdir -p "$APP_DATA_DIR" "$APP_STATE_DIR"
-SALONE_DB_PATH="$APP_DATA_DIR/salone.sqlite" HOST=127.0.0.1 PORT=4173 nohup node "$APP_DIR/server.mjs" >>"$LOG_FILE" 2>&1 </dev/null &
+mkdir -p "$APP_STATE_DIR"
+HOST=127.0.0.1 PORT=4173 nohup node "$APP_DIR/server.mjs" >>"$LOG_FILE" 2>&1 </dev/null &
 server_pid=$!
 printf '%s\n' "$server_pid" >"$PID_FILE"
 

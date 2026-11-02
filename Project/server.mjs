@@ -1,16 +1,12 @@
 import { createHash, randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { createServer } from "node:http";
-import { mkdirSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { DatabaseSync } from "node:sqlite";
 import PDFDocument from "pdfkit";
+import { createPool, migrateDatabase } from "./database.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
-const databasePath = process.env.SALONE_DB_PATH || resolve(root, "data", "salone.sqlite");
-mkdirSync(dirname(databasePath), { recursive: true });
-const database = new DatabaseSync(databasePath);
 const sessionLifetime = 30 * 60 * 1000;
 const sessionCookie = "salone_session";
 const setupToken = process.env.SETUP_TOKEN || "";
@@ -26,80 +22,32 @@ class HttpError extends Error {
   }
 }
 
-database.exec(`
-  PRAGMA foreign_keys = ON;
-  PRAGMA journal_mode = WAL;
-  CREATE TABLE IF NOT EXISTS teachers (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    display_name TEXT NOT NULL,
-    username TEXT NOT NULL UNIQUE COLLATE NOCASE,
-    school_name TEXT NOT NULL DEFAULT '',
-    salt TEXT NOT NULL,
-    password_hash TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE TABLE IF NOT EXISTS sessions (
-    token_hash TEXT PRIMARY KEY,
-    teacher_id INTEGER NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
-    last_activity INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS sessions_activity_idx ON sessions(last_activity);
-  CREATE TABLE IF NOT EXISTS students (
-    id TEXT PRIMARY KEY,
-    owner_id INTEGER NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
-    school TEXT NOT NULL,
-    student_name TEXT NOT NULL,
-    age INTEGER NOT NULL,
-    class_name TEXT NOT NULL,
-    district TEXT NOT NULL,
-    guardian_name TEXT NOT NULL,
-    guardian_phone TEXT NOT NULL,
-    guardian_email TEXT NOT NULL DEFAULT '',
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE INDEX IF NOT EXISTS students_owner_idx ON students(owner_id, created_at);
-  CREATE TABLE IF NOT EXISTS student_shares (
-    student_id TEXT NOT NULL REFERENCES students(id) ON DELETE CASCADE,
-    teacher_id INTEGER NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
-    permission TEXT NOT NULL CHECK(permission IN ('view', 'edit')),
-    granted_by INTEGER NOT NULL REFERENCES teachers(id),
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY(student_id, teacher_id)
-  );
-  CREATE TABLE IF NOT EXISTS reports (
-    id TEXT PRIMARY KEY,
-    student_id TEXT NOT NULL REFERENCES students(id) ON DELETE CASCADE,
-    created_by INTEGER NOT NULL REFERENCES teachers(id),
-    student_name TEXT NOT NULL,
-    class_name TEXT NOT NULL,
-    school TEXT NOT NULL,
-    term TEXT NOT NULL,
-    academic_year TEXT NOT NULL,
-    scores_json TEXT NOT NULL,
-    total REAL NOT NULL,
-    average REAL NOT NULL,
-    teacher_name TEXT NOT NULL DEFAULT '',
-    head_teacher_name TEXT NOT NULL DEFAULT '',
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
-  CREATE INDEX IF NOT EXISTS reports_student_idx ON reports(student_id, created_at);
-  CREATE TABLE IF NOT EXISTS school_logos (
-    school_name TEXT PRIMARY KEY COLLATE NOCASE,
-    mime_type TEXT NOT NULL CHECK(mime_type IN ('image/png', 'image/jpeg', 'image/webp')),
-    image_data BLOB NOT NULL,
-    created_by INTEGER NOT NULL REFERENCES teachers(id),
-    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-  );
-`);
-function ensureColumn(table, name, definition) {
-	if (!database.prepare(`PRAGMA table_info(${table})`).all().some(column => column.name === name)) {
-		database.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`);
-	}
+async function one(database, sql, values = []) {
+  return (await database.query(sql, values)).rows[0];
 }
-ensureColumn("teachers", "school_name", "TEXT NOT NULL DEFAULT ''");
-ensureColumn("students", "guardian_email", "TEXT NOT NULL DEFAULT ''");
-ensureColumn("reports", "teacher_name", "TEXT NOT NULL DEFAULT ''");
-ensureColumn("reports", "head_teacher_name", "TEXT NOT NULL DEFAULT ''");
+
+async function many(database, sql, values = []) {
+  return (await database.query(sql, values)).rows;
+}
+
+async function execute(database, sql, values = []) {
+  return database.query(sql, values);
+}
+
+async function transaction(database, operation) {
+  const client = await database.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await operation(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 
 function sendJson(response, status, data, headers = {}) {
   response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...headers });
@@ -186,36 +134,41 @@ function isLoopback(request) {
   return ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(request.socket.remoteAddress);
 }
 
-function createTeacher(displayName, usernameValue, password) {
+async function createTeacher(database, displayName, usernameValue, password) {
   const name = requiredText(displayName, "Teacher name", 80);
   const username = normalizeUsername(usernameValue);
   if (!validPassword(password)) fail(400, "Password must be between 12 and 128 characters.");
-  if (database.prepare("SELECT id FROM teachers WHERE username = ?").get(username)) fail(409, "That username is already in use.");
   const { salt, hash } = hashPassword(password);
-  const result = database.prepare("INSERT INTO teachers(display_name, username, salt, password_hash) VALUES (?, ?, ?, ?)").run(name, username, salt, hash);
-  return database.prepare("SELECT id, display_name AS displayName, username, school_name AS schoolName FROM teachers WHERE id = ?").get(Number(result.lastInsertRowid));
+  try {
+    return await one(database, `INSERT INTO teachers(display_name, username, salt, password_hash)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id, display_name AS "displayName", username, school_name AS "schoolName"`, [name, username, salt, hash]);
+  } catch (error) {
+    if (error.code === "23505") fail(409, "That username is already in use.");
+    throw error;
+  }
 }
 
-function issueSession(response, teacherId) {
+async function issueSession(database, response, teacherId) {
   const token = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(token).digest("hex");
-  database.prepare("INSERT INTO sessions(token_hash, teacher_id, last_activity) VALUES (?, ?, ?)").run(tokenHash, teacherId, Date.now());
+  await execute(database, "INSERT INTO sessions(token_hash, teacher_id, last_activity) VALUES ($1, $2, $3)", [tokenHash, teacherId, Date.now()]);
   response.setHeader("Set-Cookie", setCookie(token));
 }
 
-function requireTeacher(request, response) {
+async function requireTeacher(database, request, response) {
   const token = readCookie(request);
   if (!token) fail(401, "Sign in to continue.");
   const tokenHash = createHash("sha256").update(token).digest("hex");
-  const session = database.prepare("SELECT teacher_id, last_activity FROM sessions WHERE token_hash = ?").get(tokenHash);
+  const session = await one(database, "SELECT teacher_id, last_activity FROM sessions WHERE token_hash = $1", [tokenHash]);
   if (!session || Date.now() - session.last_activity >= sessionLifetime) {
-    database.prepare("DELETE FROM sessions WHERE token_hash = ?").run(tokenHash);
+    await execute(database, "DELETE FROM sessions WHERE token_hash = $1", [tokenHash]);
     response.setHeader("Set-Cookie", clearCookie());
     fail(401, "Your session expired. Sign in again.");
   }
-  database.prepare("UPDATE sessions SET last_activity = ? WHERE token_hash = ?").run(Date.now(), tokenHash);
+  await execute(database, "UPDATE sessions SET last_activity = $1 WHERE token_hash = $2", [Date.now(), tokenHash]);
   response.setHeader("Set-Cookie", setCookie(token));
-  return database.prepare("SELECT id, display_name AS displayName, username, school_name AS schoolName FROM teachers WHERE id = ?").get(session.teacher_id);
+  return one(database, 'SELECT id, display_name AS "displayName", username, school_name AS "schoolName" FROM teachers WHERE id = $1', [session.teacher_id]);
 }
 
 function checkRateLimit(request, username) {
@@ -234,9 +187,9 @@ function recordLoginFailure(key) {
   loginAttempts.set(key, attempt);
 }
 
-function studentAccess(studentId, teacherId) {
-  const row = database.prepare(`SELECT s.owner_id, sh.permission FROM students s
-    LEFT JOIN student_shares sh ON sh.student_id = s.id AND sh.teacher_id = ? WHERE s.id = ?`).get(teacherId, studentId);
+async function studentAccess(database, studentId, teacherId) {
+  const row = await one(database, `SELECT s.owner_id, sh.permission FROM students s
+    LEFT JOIN student_shares sh ON sh.student_id = s.id AND sh.teacher_id = $1 WHERE s.id = $2`, [teacherId, studentId]);
   if (!row) fail(404, "Student record not found.");
   if (row.owner_id === teacherId) return "owner";
   if (row.permission) return row.permission;
@@ -347,21 +300,32 @@ function normalizeSchoolDomain(value) {
   return domain;
 }
 
-function requiredTeacherAccess(studentId, teacherId) {
-  const access = studentAccess(studentId, teacherId);
-  if (access === "view") fail(403, "This shared record is view-only.");
-  return access;
+async function requiredTeacherAccess(database, studentId, teacherId, lockForWrite = false) {
+  if (!lockForWrite) {
+    const access = await studentAccess(database, studentId, teacherId);
+    if (access === "view") fail(403, "This shared record is view-only.");
+    return access;
+  }
+  const student = await one(database, `SELECT owner_id FROM students WHERE id = $1 FOR UPDATE`, [studentId]);
+  if (!student) fail(404, "Student record not found.");
+  if (student.owner_id === teacherId) return "owner";
+  const share = await one(database, `SELECT permission FROM student_shares
+    WHERE student_id = $1 AND teacher_id = $2 FOR UPDATE`, [studentId, teacherId]);
+  if (!share) fail(404, "Student record not found.");
+  if (share.permission === "view") fail(403, "This shared record is view-only.");
+  return share.permission;
 }
 
-async function routeApi(request, response, url) {
+async function routeApi(database, request, response, url, setupToken) {
   const { pathname, searchParams } = url;
   if (request.method === "GET" && pathname === "/api/setup-status") {
-    return sendJson(response, 200, { setupRequired: database.prepare("SELECT COUNT(*) AS count FROM teachers").get().count === 0 });
+    const result = await one(database, "SELECT COUNT(*) AS count FROM teachers");
+    return sendJson(response, 200, { setupRequired: Number(result.count) === 0 });
   }
 
   if (request.method === "POST" && pathname === "/api/auth/setup") {
     assertSameOrigin(request);
-    if (database.prepare("SELECT id FROM teachers LIMIT 1").get()) fail(409, "Initial setup is already complete.");
+    if (await one(database, "SELECT id FROM teachers LIMIT 1")) fail(409, "Initial setup is already complete.");
     const body = await readJson(request);
     if (setupToken) {
       const provided = Buffer.from(typeof body.setupToken === "string" ? body.setupToken : "");
@@ -370,8 +334,8 @@ async function routeApi(request, response, url) {
     } else if (!isLoopback(request)) {
       fail(403, "Remote first-teacher setup requires a one-time setup key on the server.");
     }
-    const teacher = createTeacher(body.displayName, body.username, body.password);
-    issueSession(response, teacher.id);
+    const teacher = await createTeacher(database, body.displayName, body.username, body.password);
+    await issueSession(database, response, teacher.id);
     return sendJson(response, 201, { teacher });
   }
 
@@ -380,9 +344,9 @@ async function routeApi(request, response, url) {
     const body = await readJson(request);
     const key = checkRateLimit(request, `signup:${request.socket.remoteAddress}`);
     try {
-      const teacher = createTeacher(body.displayName, body.username, body.password);
+      const teacher = await createTeacher(database, body.displayName, body.username, body.password);
       loginAttempts.delete(key);
-      issueSession(response, teacher.id);
+      await issueSession(database, response, teacher.id);
       return sendJson(response, 201, { teacher });
     } catch (error) {
       recordLoginFailure(key);
@@ -395,51 +359,51 @@ async function routeApi(request, response, url) {
     const body = await readJson(request);
     const username = typeof body.username === "string" ? body.username.trim().toLowerCase() : "";
     const key = checkRateLimit(request, `${request.socket.remoteAddress}:${username}`);
-    const row = database.prepare("SELECT id, display_name, username, school_name, salt, password_hash FROM teachers WHERE username = ?").get(username);
+    const row = await one(database, "SELECT id, display_name, username, school_name, salt, password_hash FROM teachers WHERE username = $1", [username]);
     if (!row || !verifyPassword(body.password, row.salt, row.password_hash)) {
       recordLoginFailure(key);
       fail(401, "Username or password is incorrect.");
     }
     loginAttempts.delete(key);
     const teacher = { id: row.id, displayName: row.display_name, username: row.username, schoolName: row.school_name };
-    issueSession(response, teacher.id);
+    await issueSession(database, response, teacher.id);
     return sendJson(response, 200, { teacher });
   }
 
   if (request.method === "POST" && pathname === "/api/auth/logout") {
     assertSameOrigin(request);
     const token = readCookie(request);
-    if (token) database.prepare("DELETE FROM sessions WHERE token_hash = ?").run(createHash("sha256").update(token).digest("hex"));
+    if (token) await execute(database, "DELETE FROM sessions WHERE token_hash = $1", [createHash("sha256").update(token).digest("hex")]);
     return sendJson(response, 200, { ok: true }, { "Set-Cookie": clearCookie() });
   }
 
   if (request.method === "GET" && pathname === "/api/auth/me") {
     if (!readCookie(request)) return sendJson(response, 200, { authenticated: false });
-    return sendJson(response, 200, { authenticated: true, teacher: requireTeacher(request, response), idleTimeoutMinutes: 30 });
+    return sendJson(response, 200, { authenticated: true, teacher: await requireTeacher(database, request, response), idleTimeoutMinutes: 30 });
   }
 
-  const teacher = requireTeacher(request, response);
+  const teacher = await requireTeacher(database, request, response);
 
   if (request.method === "PATCH" && pathname === "/api/auth/profile") {
     assertSameOrigin(request);
     const body = await readJson(request);
     const schoolName = requiredText(body.schoolName, "School name", 100);
-    database.prepare("UPDATE teachers SET school_name = ? WHERE id = ?").run(schoolName, teacher.id);
+    await execute(database, "UPDATE teachers SET school_name = $1 WHERE id = $2", [schoolName, teacher.id]);
     return sendJson(response, 200, { teacher: { ...teacher, schoolName } });
   }
 
   if (request.method === "GET" && pathname === "/api/teachers") {
     const query = (searchParams.get("q") || "").trim().slice(0, 80);
     if (query.length < 2) return sendJson(response, 200, { teachers: [] });
-    const matches = database.prepare(`SELECT id, display_name AS displayName, username FROM teachers
-      WHERE display_name LIKE ? COLLATE NOCASE OR username LIKE ? COLLATE NOCASE ORDER BY display_name LIMIT 15`).all(`%${query}%`, `%${query}%`);
+    const matches = await many(database, `SELECT id, display_name AS "displayName", username FROM teachers
+      WHERE display_name ILIKE $1 OR username ILIKE $2 ORDER BY display_name LIMIT 15`, [`%${query}%`, `%${query}%`]);
     return sendJson(response, 200, { teachers: matches });
   }
 
   if (request.method === "GET" && pathname === "/api/schools") {
     const query = (searchParams.get("q") || "").trim().slice(0, 100);
     if (!query) return sendJson(response, 200, { schools: [] });
-    const rows = database.prepare("SELECT school_name, mime_type, image_data FROM school_logos WHERE school_name LIKE ? COLLATE NOCASE ORDER BY school_name LIMIT 10").all(`%${query}%`);
+    const rows = await many(database, "SELECT school_name, mime_type, image_data FROM school_logos WHERE school_name_key LIKE $1 ORDER BY school_name LIMIT 10", [`%${query.toLowerCase()}%`]);
     return sendJson(response, 200, { schools: rows.map(row => ({ name: row.school_name, logo: logoDataUrl(row) })) });
   }
 
@@ -448,10 +412,15 @@ async function routeApi(request, response, url) {
     const body = await readJson(request, 2 * 1024 * 1024);
     const schoolName = requiredText(body.schoolName, "School name", 100);
     const { mimeType, image } = parseSchoolLogo(body.logoDataUrl);
-    const existing = database.prepare("SELECT created_by FROM school_logos WHERE school_name = ? COLLATE NOCASE").get(schoolName);
+    const schoolNameKey = schoolName.toLowerCase();
+    const existing = await one(database, "SELECT created_by FROM school_logos WHERE school_name_key = $1", [schoolNameKey]);
     if (existing && existing.created_by !== teacher.id) fail(409, "A logo for this school is already in the directory. Select it from the school suggestions.");
-    database.prepare(`INSERT INTO school_logos(school_name, mime_type, image_data, created_by) VALUES (?, ?, ?, ?)
-      ON CONFLICT(school_name) DO UPDATE SET mime_type = excluded.mime_type, image_data = excluded.image_data, updated_at = CURRENT_TIMESTAMP`).run(schoolName, mimeType, image, teacher.id);
+    const saved = await execute(database, `INSERT INTO school_logos(school_name, school_name_key, mime_type, image_data, created_by)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT(school_name_key) DO UPDATE SET mime_type = EXCLUDED.mime_type, image_data = EXCLUDED.image_data, updated_at = CURRENT_TIMESTAMP
+      WHERE school_logos.created_by = EXCLUDED.created_by`,
+    [schoolName, schoolNameKey, mimeType, image, teacher.id]);
+    if (saved.rowCount === 0) fail(409, "A logo for this school is already in the directory. Select it from the school suggestions.");
     return sendJson(response, 201, { school: { name: schoolName, logo: `data:${mimeType};base64,${image.toString("base64")}` } });
   }
 
@@ -476,17 +445,23 @@ async function routeApi(request, response, url) {
     if (contentLength > 1024 * 1024) fail(413, "The website icon is too large.");
     const image = Buffer.from(await remote.arrayBuffer());
     const validated = parseSchoolLogo(`data:${mimeType};base64,${image.toString("base64")}`);
-    const existing = database.prepare("SELECT created_by FROM school_logos WHERE school_name = ? COLLATE NOCASE").get(schoolName);
+    const schoolNameKey = schoolName.toLowerCase();
+    const existing = await one(database, "SELECT created_by FROM school_logos WHERE school_name_key = $1", [schoolNameKey]);
     if (existing && existing.created_by !== teacher.id) fail(409, "A logo for this school is already in the directory. Select it from the school suggestions.");
-    database.prepare(`INSERT INTO school_logos(school_name, mime_type, image_data, created_by) VALUES (?, ?, ?, ?)
-      ON CONFLICT(school_name) DO UPDATE SET mime_type = excluded.mime_type, image_data = excluded.image_data, updated_at = CURRENT_TIMESTAMP`).run(schoolName, validated.mimeType, validated.image, teacher.id);
+    const saved = await execute(database, `INSERT INTO school_logos(school_name, school_name_key, mime_type, image_data, created_by)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT(school_name_key) DO UPDATE SET mime_type = EXCLUDED.mime_type, image_data = EXCLUDED.image_data, updated_at = CURRENT_TIMESTAMP
+      WHERE school_logos.created_by = EXCLUDED.created_by`,
+    [schoolName, schoolNameKey, validated.mimeType, validated.image, teacher.id]);
+    if (saved.rowCount === 0) fail(409, "A logo for this school is already in the directory. Select it from the school suggestions.");
     return sendJson(response, 201, { school: { name: schoolName, domain, logo: `data:${validated.mimeType};base64,${validated.image.toString("base64")}` } });
   }
 
   if (request.method === "GET" && pathname === "/api/students") {
-    const rows = database.prepare(`SELECT s.*, t.display_name AS owner_name, CASE WHEN s.owner_id = ? THEN 'owner' ELSE sh.permission END AS access
-      FROM students s LEFT JOIN student_shares sh ON sh.student_id = s.id AND sh.teacher_id = ?
-      JOIN teachers t ON t.id = s.owner_id WHERE s.owner_id = ? OR sh.teacher_id = ? ORDER BY s.created_at DESC, s.id DESC`).all(teacher.id, teacher.id, teacher.id, teacher.id);
+    const rows = await many(database, `SELECT s.*, t.display_name AS owner_name, CASE WHEN s.owner_id = $1 THEN 'owner' ELSE sh.permission END AS access
+      FROM students s LEFT JOIN student_shares sh ON sh.student_id = s.id AND sh.teacher_id = $2
+      JOIN teachers t ON t.id = s.owner_id WHERE s.owner_id = $3 OR sh.teacher_id = $4 ORDER BY s.created_at DESC, s.id DESC`,
+    [teacher.id, teacher.id, teacher.id, teacher.id]);
     return sendJson(response, 200, { students: rows.map(row => studentDto(row, row.access, row.owner_name)) });
   }
 
@@ -503,25 +478,26 @@ async function routeApi(request, response, url) {
     const guardianPhone = requiredText(body.guardianPhone, "Guardian phone", 25);
 		const guardianEmail = typeof body.guardianEmail === "string" ? body.guardianEmail.trim() : "";
 		if (guardianEmail.length > 254 || (guardianEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardianEmail))) fail(400, "Enter a valid guardian email address.");
-    database.prepare("UPDATE teachers SET school_name = ? WHERE id = ?").run(school, teacher.id);
+    await execute(database, "UPDATE teachers SET school_name = $1 WHERE id = $2", [school, teacher.id]);
     const year = new Date().getFullYear();
-    const prefix = `SL-${year}-`;
-    const max = database.prepare("SELECT COALESCE(MAX(CAST(SUBSTR(id, 9) AS INTEGER)), 0) AS value FROM students WHERE id LIKE ?").get(`${prefix}%`).value;
-    const id = `${prefix}${String(max + 1).padStart(4, "0")}`;
-    database.prepare(`INSERT INTO students(id, owner_id, school, student_name, age, class_name, district, guardian_name, guardian_phone, guardian_email)
-  			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(id, teacher.id, school, studentName, age, body.className, body.district, guardianName, guardianPhone, guardianEmail);
-    const row = database.prepare("SELECT * FROM students WHERE id = ?").get(id);
+    const counter = await one(database, `INSERT INTO student_id_counters(year, last_value) VALUES ($1, 1)
+      ON CONFLICT(year) DO UPDATE SET last_value = student_id_counters.last_value + 1
+      RETURNING last_value`, [year]);
+    const id = `SL-${year}-${String(counter.last_value).padStart(4, "0")}`;
+    const row = await one(database, `INSERT INTO students(id, owner_id, school, student_name, age, class_name, district, guardian_name, guardian_phone, guardian_email)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+    [id, teacher.id, school, studentName, age, body.className, body.district, guardianName, guardianPhone, guardianEmail]);
     return sendJson(response, 201, { student: studentDto(row, "owner", teacher.displayName) });
   }
 
   const sharePath = pathname.match(/^\/api\/students\/([^/]+)\/shares(?:\/([0-9]+))?$/);
   if (sharePath) {
     const studentId = decodeURIComponent(sharePath[1]);
-    const student = database.prepare("SELECT owner_id FROM students WHERE id = ?").get(studentId);
+    const student = await one(database, "SELECT owner_id FROM students WHERE id = $1", [studentId]);
     if (!student || student.owner_id !== teacher.id) fail(404, "Student record not found.");
     if (request.method === "GET" && !sharePath[2]) {
-      const shares = database.prepare(`SELECT t.id AS teacherId, t.display_name AS displayName, t.username, sh.permission, sh.created_at AS createdAt
-        FROM student_shares sh JOIN teachers t ON t.id = sh.teacher_id WHERE sh.student_id = ? ORDER BY t.display_name`).all(studentId);
+      const shares = await many(database, `SELECT t.id AS "teacherId", t.display_name AS "displayName", t.username, sh.permission, sh.created_at AS "createdAt"
+        FROM student_shares sh JOIN teachers t ON t.id = sh.teacher_id WHERE sh.student_id = $1 ORDER BY t.display_name`, [studentId]);
       return sendJson(response, 200, { shares });
     }
     if (request.method === "POST" && !sharePath[2]) {
@@ -529,19 +505,20 @@ async function routeApi(request, response, url) {
       const body = await readJson(request);
       const identifier = requiredText(body.username, "Teacher name or username", 80);
       if (!["view", "edit"].includes(body.permission)) fail(400, "Choose view or edit access.");
-      const targets = database.prepare(`SELECT id FROM teachers WHERE username = ? COLLATE NOCASE
-        OR lower(trim(display_name)) = lower(trim(?))`).all(identifier, identifier);
+      const targets = await many(database, `SELECT id FROM teachers WHERE username = $1
+        OR lower(trim(display_name)) = lower(trim($2))`, [identifier.toLowerCase(), identifier]);
       if (!targets.length) fail(404, "No teacher account matches that name or username.");
       if (targets.length > 1) fail(409, "More than one teacher has that name. Use their unique username instead.");
       const target = targets[0];
       if (target.id === teacher.id) fail(400, "You already have access to this student.");
-      database.prepare(`INSERT INTO student_shares(student_id, teacher_id, permission, granted_by) VALUES (?, ?, ?, ?)
-        ON CONFLICT(student_id, teacher_id) DO UPDATE SET permission = excluded.permission, granted_by = excluded.granted_by`).run(studentId, target.id, body.permission, teacher.id);
+      await execute(database, `INSERT INTO student_shares(student_id, teacher_id, permission, granted_by) VALUES ($1, $2, $3, $4)
+        ON CONFLICT(student_id, teacher_id) DO UPDATE SET permission = EXCLUDED.permission, granted_by = EXCLUDED.granted_by`,
+      [studentId, target.id, body.permission, teacher.id]);
       return sendJson(response, 200, { ok: true });
     }
     if (request.method === "DELETE" && sharePath[2]) {
       assertSameOrigin(request);
-      database.prepare("DELETE FROM student_shares WHERE student_id = ? AND teacher_id = ?").run(studentId, Number(sharePath[2]));
+      await execute(database, "DELETE FROM student_shares WHERE student_id = $1 AND teacher_id = $2", [studentId, Number(sharePath[2])]);
       return sendJson(response, 200, { ok: true });
     }
   }
@@ -549,15 +526,16 @@ async function routeApi(request, response, url) {
   if (request.method === "DELETE" && pathname.startsWith("/api/students/")) {
     assertSameOrigin(request);
     const id = decodeURIComponent(pathname.slice("/api/students/".length));
-    const result = database.prepare("DELETE FROM students WHERE id = ? AND owner_id = ?").run(id, teacher.id);
-    if (!result.changes) fail(404, "Student record not found.");
+    const result = await execute(database, "DELETE FROM students WHERE id = $1 AND owner_id = $2", [id, teacher.id]);
+    if (result.rowCount === 0) fail(404, "Student record not found.");
     return sendJson(response, 200, { ok: true });
   }
 
   if (request.method === "GET" && pathname === "/api/reports") {
-    const rows = database.prepare(`SELECT r.* FROM reports r JOIN students s ON s.id = r.student_id
-      LEFT JOIN student_shares sh ON sh.student_id = s.id AND sh.teacher_id = ?
-      WHERE s.owner_id = ? OR sh.teacher_id = ? ORDER BY r.created_at DESC, r.id DESC`).all(teacher.id, teacher.id, teacher.id);
+    const rows = await many(database, `SELECT r.* FROM reports r JOIN students s ON s.id = r.student_id
+      LEFT JOIN student_shares sh ON sh.student_id = s.id AND sh.teacher_id = $1
+      WHERE s.owner_id = $2 OR sh.teacher_id = $3 ORDER BY r.created_at DESC, r.id DESC`,
+    [teacher.id, teacher.id, teacher.id]);
     return sendJson(response, 200, { reports: rows.map(reportDto) });
   }
 
@@ -565,39 +543,42 @@ async function routeApi(request, response, url) {
     assertSameOrigin(request);
     const body = await readJson(request);
     const studentId = requiredText(body.studentId, "Student", 50);
-    requiredTeacherAccess(studentId, teacher.id);
-    const student = database.prepare("SELECT * FROM students WHERE id = ?").get(studentId);
-    const term = body.term;
-    if (!["Term 1", "Term 2", "Term 3"].includes(term)) fail(400, "Choose a valid term.");
-    const academicYear = requiredText(body.academicYear, "Academic year", 9);
-    if (!/^\d{4}\/\d{4}$/.test(academicYear)) fail(400, "Academic year must use the format 2026/2027.");
-		const teacherName = typeof body.teacherName === "string" && body.teacherName.trim() ? requiredText(body.teacherName, "Teacher name", 80) : teacher.displayName;
-    const headTeacherName = requiredText(body.headTeacherName, "Head teacher name", 80);
-    if (!Array.isArray(body.scores) || body.scores.length < 1 || body.scores.length > 20) fail(400, "A report must include between 1 and 20 subjects.");
-    const subjects = new Set();
-    const scores = body.scores.map(item => {
-      const subject = requiredText(item?.subject, "Subject name", 60);
-      if (subjects.has(subject.toLowerCase())) fail(400, "Subject names must be unique on a report.");
-      subjects.add(subject.toLowerCase());
-      const score = Number(item.score);
-      if (!Number.isFinite(score) || score < 0 || score > 100) fail(400, "Each score must be between 0 and 100.");
-      return { subject, score };
+    const report = await transaction(database, async client => {
+      await requiredTeacherAccess(client, studentId, teacher.id, true);
+      const student = await one(client, "SELECT * FROM students WHERE id = $1", [studentId]);
+      const term = body.term;
+      if (!["Term 1", "Term 2", "Term 3"].includes(term)) fail(400, "Choose a valid term.");
+      const academicYear = requiredText(body.academicYear, "Academic year", 9);
+      if (!/^\d{4}\/\d{4}$/.test(academicYear)) fail(400, "Academic year must use the format 2026/2027.");
+      const teacherName = typeof body.teacherName === "string" && body.teacherName.trim() ? requiredText(body.teacherName, "Teacher name", 80) : teacher.displayName;
+      const headTeacherName = requiredText(body.headTeacherName, "Head teacher name", 80);
+      if (!Array.isArray(body.scores) || body.scores.length < 1 || body.scores.length > 20) fail(400, "A report must include between 1 and 20 subjects.");
+      const subjects = new Set();
+      const scores = body.scores.map(item => {
+        const subject = requiredText(item?.subject, "Subject name", 60);
+        if (subjects.has(subject.toLowerCase())) fail(400, "Subject names must be unique on a report.");
+        subjects.add(subject.toLowerCase());
+        const score = Number(item.score);
+        if (!Number.isFinite(score) || score < 0 || score > 100) fail(400, "Each score must be between 0 and 100.");
+        return { subject, score };
+      });
+      const total = scores.reduce((sum, item) => sum + item.score, 0);
+      const average = total / scores.length;
+      const id = `RC-${randomUUID()}`;
+      return one(client, `INSERT INTO reports(id, student_id, created_by, student_name, class_name, school, term, academic_year, scores_json, total, average, teacher_name, head_teacher_name)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+      [id, studentId, teacher.id, student.student_name, student.class_name, student.school, term, academicYear, JSON.stringify(scores), total, average, teacherName, headTeacherName]);
     });
-    const total = scores.reduce((sum, item) => sum + item.score, 0);
-    const average = total / scores.length;
-    const id = `RC-${randomUUID()}`;
-    database.prepare(`INSERT INTO reports(id, student_id, created_by, student_name, class_name, school, term, academic_year, scores_json, total, average, teacher_name, head_teacher_name)
-  			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(id, studentId, teacher.id, student.student_name, student.class_name, student.school, term, academicYear, JSON.stringify(scores), total, average, teacherName, headTeacherName);
-    return sendJson(response, 201, { report: reportDto(database.prepare("SELECT * FROM reports WHERE id = ?").get(id)) });
+    return sendJson(response, 201, { report: reportDto(report) });
   }
 
   const reportPdfPath = pathname.match(/^\/api\/reports\/([^/]+)\/pdf$/);
   if (request.method === "GET" && reportPdfPath) {
     const reportId = decodeURIComponent(reportPdfPath[1]);
-    const report = database.prepare("SELECT * FROM reports WHERE id = ?").get(reportId);
+    const report = await one(database, "SELECT * FROM reports WHERE id = $1", [reportId]);
     if (!report) fail(404, "Report card not found.");
-    studentAccess(report.student_id, teacher.id);
-    const logo = database.prepare("SELECT mime_type, image_data FROM school_logos WHERE school_name = ? COLLATE NOCASE").get(report.school);
+    await studentAccess(database, report.student_id, teacher.id);
+    const logo = await one(database, "SELECT mime_type, image_data FROM school_logos WHERE school_name_key = $1", [report.school.toLowerCase()]);
     const pdf = await createReportPdf(report, logo);
     response.writeHead(200, {
       "Content-Type": "application/pdf",
@@ -612,10 +593,12 @@ async function routeApi(request, response, url) {
   if (request.method === "DELETE" && reportPath) {
     assertSameOrigin(request);
     const id = decodeURIComponent(reportPath[1]);
-    const report = database.prepare("SELECT student_id FROM reports WHERE id = ?").get(id);
-    if (!report) fail(404, "Report card not found.");
-    requiredTeacherAccess(report.student_id, teacher.id);
-    database.prepare("DELETE FROM reports WHERE id = ?").run(id);
+    await transaction(database, async client => {
+      const report = await one(client, "SELECT student_id FROM reports WHERE id = $1", [id]);
+      if (!report) fail(404, "Report card not found.");
+      await requiredTeacherAccess(client, report.student_id, teacher.id, true);
+      await execute(client, "DELETE FROM reports WHERE id = $1", [id]);
+    });
     return sendJson(response, 200, { ok: true });
   }
 
@@ -637,40 +620,54 @@ const staticAssets = new Map([
   ["/sw.js", { file: "sw.js", contentType: "text/javascript; charset=utf-8", cacheControl: "no-cache", serviceWorker: true }]
 ]);
 
-const server = createServer(async (request, response) => {
-  applySecurityHeaders(response);
+export function createApp(database, options = {}) {
+  const configuredSetupToken = options.setupToken ?? setupToken;
+  return createServer(async (request, response) => {
+    applySecurityHeaders(response);
+    try {
+      const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
+      if (url.pathname.startsWith("/api/")) return await routeApi(database, request, response, url, configuredSetupToken);
+      const staticAsset = staticAssets.get(url.pathname);
+      if (request.method === "GET" && staticAsset) {
+        const contents = await readFile(resolve(root, staticAsset.file));
+        response.writeHead(200, {
+          "Content-Type": staticAsset.contentType,
+          "Cache-Control": staticAsset.cacheControl,
+          ...(staticAsset.serviceWorker ? { "Service-Worker-Allowed": "/" } : {})
+        });
+        return response.end(contents);
+      }
+      if (request.method === "GET" && ["/", "/index.html"].includes(url.pathname)) {
+        const html = await readFile(resolve(root, "index.html"));
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+        return response.end(html);
+      }
+      return sendJson(response, 404, { error: "Not found." });
+    } catch (error) {
+      if (response.headersSent) return response.destroy();
+      if (!(error instanceof HttpError)) console.error("Request failed:", error.code || error.name);
+      return sendJson(response, error.status || 500, { error: error.status ? error.message : "Server error." }, error.status === 401 ? { "Set-Cookie": clearCookie() } : {});
+    }
+  });
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const database = createPool();
   try {
-    const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
-    if (url.pathname.startsWith("/api/")) return await routeApi(request, response, url);
-    const staticAsset = staticAssets.get(url.pathname);
-    if (request.method === "GET" && staticAsset) {
-      const contents = await readFile(resolve(root, staticAsset.file));
-      response.writeHead(200, {
-        "Content-Type": staticAsset.contentType,
-        "Cache-Control": staticAsset.cacheControl,
-        ...(staticAsset.serviceWorker ? { "Service-Worker-Allowed": "/" } : {})
-      });
-      return response.end(contents);
-    }
-    if (request.method === "GET" && ["/", "/index.html"].includes(url.pathname)) {
-      const html = await readFile(resolve(root, "index.html"));
-      response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
-      return response.end(html);
-    }
-    return sendJson(response, 404, { error: "Not found." });
+    await migrateDatabase(database);
+    const host = process.env.HOST || "127.0.0.1";
+    const port = Number(process.env.PORT || 4173);
+    const server = createApp(database);
+    server.listen(port, host, () => console.log(`Salone Register listening on http://${host}:${port}`));
+
+    setInterval(() => {
+      execute(database, "DELETE FROM sessions WHERE last_activity < $1", [Date.now() - sessionLifetime])
+        .catch(error => console.error("Session cleanup failed:", error.message));
+      const now = Date.now();
+      for (const [key, attempt] of loginAttempts) if (attempt.lockedUntil < now && now - attempt.startedAt > 15 * 60 * 1000) loginAttempts.delete(key);
+    }, 60_000).unref();
   } catch (error) {
-    if (response.headersSent) return response.destroy();
-    if (!(error instanceof HttpError)) console.error("Request failed:", error.message);
-    return sendJson(response, error.status || 500, { error: error.status ? error.message : "Server error." }, error.status === 401 ? { "Set-Cookie": clearCookie() } : {});
+    await database.end();
+    throw error;
   }
-});
-
-const host = process.env.HOST || "127.0.0.1";
-const port = Number(process.env.PORT || 4173);
-server.listen(port, host, () => console.log(`Salone Register listening on http://${host}:${port}`));
-
-setInterval(() => {
-  database.prepare("DELETE FROM sessions WHERE last_activity < ?").run(Date.now() - sessionLifetime);
-  const now = Date.now();
-  for (const [key, attempt] of loginAttempts) if (attempt.lockedUntil < now && now - attempt.startedAt > 15 * 60 * 1000) loginAttempts.delete(key);
-}, 60_000).unref();
+}

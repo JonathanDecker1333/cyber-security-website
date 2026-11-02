@@ -8,8 +8,9 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
-COPY --chown=node:node server.mjs index.html manifest.webmanifest icon.svg apple-touch-icon.png sw.js ./
-RUN mkdir -p /app/data && chown node:node /app/data
+COPY --chown=node:node server.mjs database.mjs index.html manifest.webmanifest icon.svg apple-touch-icon.png sw.js ./
+COPY --chown=node:node migrations ./migrations
+COPY --chown=node:node scripts ./scripts
 
 USER node
 EXPOSE 4173
