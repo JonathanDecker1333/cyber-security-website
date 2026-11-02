@@ -40,5 +40,5 @@ printf '%s\n' \
 
 chmod 644 "$DESKTOP_FILE"
 printf 'Installed Salone Register in your application menu.\n'
-printf 'Database location: %s/.local/share/salone-register/salone.sqlite\n' "${XDG_DATA_HOME:-$HOME}"
+printf 'Set DATABASE_URL to your PostgreSQL connection string before launching the app.\n'
 printf 'Choose Salone Register from the Applications menu to start it.\n'
