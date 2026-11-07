@@ -154,7 +154,7 @@ function renderCallHistory() {
     <article class="call-history-item">
       <span class="call-type-mark" aria-hidden="true">${call.mode === 'video' ? 'V' : 'A'}</span>
       <span class="call-history-copy"><strong>${call.mode === 'video' ? 'Video call' : 'Voice call'}</strong><small>${escapeHtml(formatDate(call.createdAt))}</small></span>
-      <span class="call-history-actions"><button type="button" data-call-open="${escapeHtml(call.url)}">Join</button><button type="button" data-call-share="${escapeHtml(call.url)}">Share</button></span>
+      <span class="call-history-actions"><button type="button" data-call-open="${escapeHtml(call.url)}">Join</button><button type="button" data-call-share="${escapeHtml(call.url)}" data-call-mode="${call.mode}">Share</button><button type="button" data-call-whatsapp="${escapeHtml(call.url)}" data-call-mode="${call.mode}">WhatsApp</button></span>
     </article>
   `).join('') : '<div class="empty-state">Your call links will appear here.</div>';
 }
@@ -164,7 +164,7 @@ function showCallLink(call) {
   elements.callLinkBox.innerHTML = `
     <div class="call-link-heading"><strong>${call.mode === 'video' ? 'Video call link ready' : 'Voice call link ready'}</strong><small>Share this invite with one person or a group.</small></div>
     <input class="call-link-input" type="url" readonly aria-label="Call invite link" value="${escapeHtml(call.url)}" />
-    <div class="call-link-actions"><button class="action-button" type="button" data-call-open="${escapeHtml(call.url)}">Join call</button><button class="call-share-button" type="button" data-call-share="${escapeHtml(call.url)}">Share link</button></div>
+    <div class="call-link-actions"><button class="action-button" type="button" data-call-open="${escapeHtml(call.url)}">Join call</button><button class="call-share-button" type="button" data-call-share="${escapeHtml(call.url)}" data-call-mode="${call.mode}">Share link</button><button class="call-share-button" type="button" data-call-whatsapp="${escapeHtml(call.url)}" data-call-mode="${call.mode}">WhatsApp</button></div>
   `;
 }
 
@@ -184,10 +184,10 @@ function createCallLink(event) {
   renderCallHistory();
 }
 
-async function shareCallLink(url) {
+async function shareCallLink(url, mode = 'video') {
   try {
     if (navigator.share) {
-      await navigator.share({ title: 'SYX call invite', text: 'Join my call', url });
+      await navigator.share({ title: 'SYX call invite', text: `Join me for a ${mode} call on SYX.`, url });
     } else if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(url);
       showStatus('Call link copied.');
@@ -199,14 +199,26 @@ async function shareCallLink(url) {
   }
 }
 
+function shareOnWhatsApp(url, mode = 'video') {
+  const message = `Join me for a ${mode} call on SYX: ${url}`;
+  const shareUrl = new URL('https://wa.me/');
+  shareUrl.searchParams.set('text', message);
+  window.open(shareUrl, '_blank', 'noopener,noreferrer');
+}
+
 function handleCallAction(event) {
   const openButton = event.target.closest('[data-call-open]');
   if (openButton) {
     window.open(openButton.dataset.callOpen, '_blank', 'noopener,noreferrer');
     return;
   }
+  const whatsappButton = event.target.closest('[data-call-whatsapp]');
+  if (whatsappButton) {
+    shareOnWhatsApp(whatsappButton.dataset.callWhatsapp, whatsappButton.dataset.callMode);
+    return;
+  }
   const shareButton = event.target.closest('[data-call-share]');
-  if (shareButton) shareCallLink(shareButton.dataset.callShare);
+  if (shareButton) shareCallLink(shareButton.dataset.callShare, shareButton.dataset.callMode);
 }
 
 function showStatus(message, isError = false) {

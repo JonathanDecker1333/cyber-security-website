@@ -1,8 +1,10 @@
 import express from 'express';
 import session from 'express-session';
+import connectSqlite3 from 'connect-sqlite3';
 import bcrypt from 'bcryptjs';
 import sqlite3 from 'sqlite3';
 import { randomUUID } from 'node:crypto';
+import { mkdirSync } from 'node:fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -17,24 +19,41 @@ try {
 
 const app = express();
 const port = process.env.PORT || 3000;
+const host = process.env.HOST || '127.0.0.1';
+const isProduction = process.env.NODE_ENV === 'production';
+const sessionSecret = process.env.SESSION_SECRET;
+const dataDirectory = path.resolve(process.env.DATA_DIR || __dirname);
+const SQLiteStore = connectSqlite3(session);
+
+if (isProduction && (!sessionSecret || sessionSecret.length < 32)) {
+  throw new Error('SESSION_SECRET must be set to a random value of at least 32 characters in production.');
+}
+
+mkdirSync(dataDirectory, { recursive: true });
+if (isProduction) app.set('trust proxy', 1);
 
 app.use(express.json({ limit: '12mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'syx-local-secret-change-me',
+    store: new SQLiteStore({
+      db: 'syx-sessions.sqlite',
+      dir: dataDirectory,
+      concurrentDB: true,
+    }),
+    secret: sessionSecret || 'syx-local-secret-change-me',
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
-      secure: false,
+      secure: isProduction,
       maxAge: 1000 * 60 * 60 * 24,
     },
   })
 );
 
-const db = new sqlite3.Database(path.join(__dirname, 'syx.db'));
+const db = new sqlite3.Database(path.join(dataDirectory, 'syx.db'));
 
 function run(sql, params = []) {
   return new Promise((resolve, reject) => {
@@ -1237,8 +1256,8 @@ app.use((req, res) => {
 
 async function startServer() {
   await initDb();
-  app.listen(port, () => {
-    console.log(`SYX app running on http://localhost:${port}`);
+  app.listen(port, host, () => {
+    console.log(`SYX app running on http://${host}:${port}`);
   });
 }
 

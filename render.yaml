@@ -42,3 +42,26 @@ services:
         sync: false
       - key: SETUP_TOKEN
         generateValue: true
+
+  - type: web
+    name: syx-social
+    runtime: node
+    plan: starter
+    region: oregon
+    rootDir: what sapp clone
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /login.html
+    disk:
+      name: syx-social-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATA_DIR
+        value: /var/data
+      - key: SESSION_SECRET
+        generateValue: true
