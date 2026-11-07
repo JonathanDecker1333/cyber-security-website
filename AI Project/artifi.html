@@ -586,7 +586,7 @@
     async function callGeminiAI(prompt) {
       const apiKey = getStoredApiKey();
       if (!apiKey) throw new Error("Add your Gemini API key with the key button before chatting.");
-      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
+      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
 
       const systemInstruction = "You are Artifi, a futuristic, intelligent, helpful AI assistant. Provide concise, clear, and direct answers.";
       const nextHistory = [...chatHistory, { role: "user", parts: [{ text: prompt }] }].slice(-20);
@@ -636,14 +636,15 @@
       chatMessages.scrollTop = chatMessages.scrollHeight;
       lucide.createIcons();
 
-      const el = document.getElementById(loadingId);
-      if (el) el.remove();
-
       try {
         const reply = await callGeminiAI(text);
+        const el = document.getElementById(loadingId);
+        if (el) el.remove();
         appendMessage('assistant', reply);
         speakText(reply);
       } catch (err) {
+        const el = document.getElementById(loadingId);
+        if (el) el.remove();
         appendMessage('assistant', `I couldn't complete that request. ${err.message}`);
       }
     }

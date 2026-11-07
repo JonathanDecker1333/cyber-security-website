@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="artifi">
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-	<meta name="theme-color" content="#f3f6f1">
-	<meta name="description" content="A private AI chat that runs on your own computer.">
-	<title>D chart</title>
+	<meta name="theme-color" content="#05070f">
+	<meta name="description" content="Artifi is a Google Gemini AI assistant with voice, camera gestures, and question scanning.">
+	<title>Artifi — Gemini AI Assistant</title>
 	<style>
 		:root {
 			color-scheme: light;
@@ -134,18 +134,112 @@
 		@media (prefers-reduced-motion: reduce) {
 			*, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 		}
+		:root {
+			color-scheme: dark;
+			--paper: #05070f;
+			--surface: #0b111a;
+			--ink: #e8f4f7;
+			--muted: #91a6b0;
+			--line: #183541;
+			--green: #06b6d4;
+			--green-dark: #07839a;
+			--green-pale: #102b37;
+			--lime: #c8fbff;
+			--coral: #ff718d;
+			--shadow: 0 16px 48px rgb(0 0 0 / 35%);
+		}
+		body { background: radial-gradient(ellipse at 75% -18%, #123343 0, transparent 42rem), #05070f; color: var(--ink); }
+		.app { background: rgb(5 7 15 / 82%); }
+		.sidebar { background: rgb(7 12 20 / 94%); border-color: #16323e; }
+		.brand-mark, .welcome-mark { background: #092b39; color: #67e8f9; box-shadow: 0 0 24px rgb(0 220 255 / 14%); }
+		.brand-name { color: #e5fbff; }
+		.brand-caption, .section-label, .privacy-copy, .clear-chats, .model-label, .online-copy { color: #8099a4; }
+		.new-chat { border-color: #16748a; background: linear-gradient(110deg, #087e98, #5940a3); box-shadow: 0 0 20px rgb(0 220 255 / 13%); }
+		.new-chat:hover { background: linear-gradient(110deg, #0897b5, #704bc4); }
+		.thread-open { color: #a9bdc6; }
+		.thread-open:hover, .thread-open.active { background: #102b37; color: #8cf2ff; }
+		.thread-delete { color: #8299a1; }
+		.thread-delete:hover { background: #3a1c2a; color: #ff9aaf; }
+		.sidebar-bottom, .topbar { border-color: #17323d; }
+		.topbar { background: rgb(5 9 16 / 76%); }
+		#model-picker { border-color: #23414d; background: #0b141e; color: #d7e8ee; }
+		.conversation { scrollbar-color: #1a5262 #071019; }
+		.welcome h1 { color: #e6f8fc; }
+		.welcome p, .message-name { color: #91aab3; }
+		.suggestion { border-color: #1b3945; background: #0c151f; color: #c2d5dc; }
+		.suggestion:hover { border-color: #1da3b8; background: #10232e; }
+		.message-avatar { background: #0b2b38; color: #67e8f9; }
+		.message.user .message-avatar { background: #382033; color: #ff9ac2; }
+		.message-body { color: #d4e4e9; }
+		.thinking { color: #8baab3; }
+		.thinking i { background: #39d9ef; }
+		.setup-note { border-color: #ffbd5b; background: #2a2111; color: #f0d7a2; }
+		code { background: rgb(100 190 190 / 12%); color: #b6f5f5; }
+		.composer-area { background: linear-gradient(transparent, #05070f 24%); }
+		.composer { border-color: #1d4350; background: #0a121c; box-shadow: 0 0 25px rgb(0 213 255 / 8%); }
+		#prompt { color: #e7f6fa; }
+		#prompt::placeholder { color: #78909a; }
+		.send { background: linear-gradient(135deg, #06b6d4, #7652d6); color: #fff; box-shadow: 0 0 17px rgb(0 220 255 / 24%); }
+		.send:hover { background: linear-gradient(135deg, #22d3ee, #9069ef); }
+		.send:disabled { background: #36434a; color: #84949b; box-shadow: none; }
+		.stop { background: #351d27; color: #ff9aae; }
+		.stop:hover { background: #512431; }
+		.composer-foot { color: #78909a; }
+		.local-status { color: #a5bcc4; }
+		.local-status.ready .status-dot { background: #43e6a1; box-shadow: 0 0 0 3px #123829; }
+		.local-status.error .status-dot { background: #ff8295; box-shadow: 0 0 0 3px #3a1b28; }
+		.mobile-new-chat { border-color: #21414d; background: #0b141e; color: #72e8f5; }
+		.mobile-history .thread-open { border-color: #21414d; background: #0b141e; color: #b8ccd3; }
+		.mobile-history .thread-open.active { border-color: #16748a; background: #102b37; }
+		.assistant-tools { display: flex; align-items: center; gap: 7px; }
+		.tool-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 0 10px; border: 1px solid #214653; border-radius: 8px; background: #0b151f; color: #bdeaf0; cursor: pointer; font-size: 11px; }
+		.tool-button:hover, .tool-button[aria-pressed="true"] { border-color: #0bc4dc; background: #102d39; color: #8cf5ff; }
+		.tool-button:disabled { cursor: not-allowed; opacity: .48; }
+		.vision-panel { position: fixed; z-index: 20; top: 76px; right: 22px; width: min(360px, calc(100vw - 24px)); padding: 14px; border: 1px solid #17677a; border-radius: 14px; background: rgb(5 11 19 / 97%); box-shadow: 0 18px 55px rgb(0 0 0 / 55%), 0 0 24px rgb(0 220 255 / 12%); }
+		.vision-panel[hidden] { display: none; }
+		.vision-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; color: #74edf7; font: 700 11px/1.3 "Avenir Next", sans-serif; letter-spacing: .12em; }
+		.vision-close { border: 0; background: transparent; color: #92aab2; cursor: pointer; font-size: 20px; }
+		.camera-frame { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border: 1px solid #164451; border-radius: 10px; background: radial-gradient(circle, #10232d, #05070f 70%); }
+		.camera-frame video, .camera-frame canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+		.camera-frame video { transform: scaleX(-1); }
+		.camera-frame canvas { pointer-events: none; }
+		.camera-placeholder { position: absolute; inset: 0; display: grid; place-items: center; padding: 20px; color: #7e9ba5; text-align: center; font-size: 12px; }
+		.camera-placeholder[hidden] { display: none; }
+		.vision-actions { display: flex; gap: 8px; margin-top: 10px; }
+		.vision-actions .tool-button { flex: 1; }
+		.gesture-help { margin: 10px 0 0; color: #9ab0b8; font-size: 10px; line-height: 1.6; }
+		.vision-status { min-height: 17px; margin: 8px 0 0; color: #66dce9; font-size: 10px; }
+		.gemini-model { padding: 8px 12px; border: 1px solid #31515e; border-radius: 8px; background: #0b141e; color: #d3ecf2; font-size: 12px; }
+		.gemini-model strong { color: #81ecf6; }
+		.key-modal { position: fixed; z-index: 40; inset: 0; display: grid; place-items: center; padding: 18px; background: rgb(0 0 0 / 72%); backdrop-filter: blur(8px); }
+		.key-modal[hidden] { display: none; }
+		.key-card { width: min(440px, 100%); padding: 22px; border: 1px solid #1b899b; border-radius: 16px; background: #08111b; box-shadow: 0 20px 70px rgb(0 0 0 / 60%), 0 0 28px rgb(0 220 255 / 14%); }
+		.key-card h2 { margin: 0 0 8px; color: #83f0fa; font-size: 16px; letter-spacing: .04em; }
+		.key-card p { margin: 0 0 14px; color: #a4bac2; font-size: 12px; line-height: 1.6; }
+		.key-card a { color: #85ecf4; }
+		.key-input { width: 100%; margin: 0 0 12px; padding: 11px 12px; border: 1px solid #294953; border-radius: 8px; background: #050a11; color: #e7f8fb; font: 12px ui-monospace, monospace; }
+		.key-actions { display: flex; justify-content: flex-end; gap: 8px; }
+		.key-status { min-height: 18px; margin: 10px 0 0 !important; color: #7fe6bd !important; }
+		.google-mark { display: inline-block; font-weight: 900; background: conic-gradient(from -45deg, #4285f4 0 25%, #34a853 0 50%, #fbbc05 0 75%, #ea4335 0); color: transparent; background-clip: text; }
+		@media (max-width: 640px) {
+			.topbar { flex-wrap: wrap; gap: 6px; }
+			.assistant-tools { order: 2; width: 100%; justify-content: flex-end; }
+			.tool-button { min-height: 34px; padding: 0 8px; }
+			.vision-panel { top: 112px; right: 12px; }
+			.online-copy { display: none; }
+		}
 	</style>
 </head>
 <body>
 	<div class="app">
 		<aside class="sidebar" aria-label="Chat history">
-			<div class="brand"><span class="brand-mark" aria-hidden="true">D</span><span><span class="brand-name">D chart</span><span class="brand-caption">Your private assistant</span></span></div>
+			<div class="brand"><span class="brand-mark" aria-hidden="true">A</span><span><span class="brand-name">Artifi</span><span class="brand-caption">Private AI · Local model</span></span></div>
 			<button class="new-chat" type="button" data-new-chat><span class="new-chat-mark" aria-hidden="true">+</span>New chat</button>
 			<p class="section-label">Recent chats</p>
 			<nav class="thread-list" id="chat-list" aria-label="Recent chats"></nav>
 			<div class="sidebar-bottom">
-				<div class="local-status" id="local-status" role="status"><span class="status-dot" aria-hidden="true"></span><span id="status-text">Checking local model…</span></div>
-				<p class="privacy-copy">Your messages stay on this device and its local model.</p>
+				<div class="local-status" id="local-status" role="status"><span class="status-dot" aria-hidden="true"></span><span id="status-text">Checking Gemini API key…</span></div>
+				<p class="privacy-copy">Chat is sent to Google Gemini. Your API key stays in this browser; camera images are not stored.</p>
 				<button class="clear-chats" id="clear-chats" type="button">Clear saved chats</button>
 			</div>
 		</aside>
@@ -153,52 +247,111 @@
 			<header class="topbar">
 				<button class="mobile-new-chat" type="button" data-new-chat aria-label="Start a new chat" title="New chat">+</button>
 				<nav class="mobile-history" id="mobile-history" aria-label="Recent chats"></nav>
-				<div class="model-area"><label class="model-label" for="model-picker">Local model</label><select id="model-picker" aria-label="Choose a local model" disabled><option>Looking for models…</option></select><span class="online-copy" id="online-copy">On this computer</span></div>
+				<div class="model-area"><span class="model-label">POWERED BY</span><span class="gemini-model"><span class="google-mark" aria-hidden="true">G</span> <strong>Google Gemini 3.6</strong> · Flash</span>
+					<button class="tool-button" id="api-key-button" type="button" title="Configure your Google Gemini API key">🔑 <span id="api-key-label">Add API key</span></button>
+				</div>
+				<div class="assistant-tools" aria-label="Voice and vision tools">
+					<button class="tool-button" id="voice-button" type="button" aria-pressed="false" title="Ask a question with your voice">🎙 Voice</button>
+					<button class="tool-button" id="camera-button" type="button" aria-pressed="false" title="Open the gesture and question scanner">⌖ HUD</button>
+				</div>
 			</header>
+			<section class="vision-panel" id="vision-panel" aria-label="Artifi vision controls" hidden>
+				<div class="vision-title"><span>ARTIFI VISION HUD</span><button class="vision-close" id="close-vision" type="button" aria-label="Close vision panel">×</button></div>
+				<div class="camera-frame">
+					<video id="camera-video" autoplay muted playsinline></video>
+					<canvas id="camera-overlay"></canvas>
+					<div class="camera-placeholder" id="camera-placeholder">Camera is off. Start the camera to scan a question or use hand gestures.</div>
+				</div>
+				<div class="vision-actions">
+					<button class="tool-button" id="camera-toggle" type="button">Start camera</button>
+					<button class="tool-button" id="scan-question" type="button" disabled>Scan question</button>
+				</div>
+				<p class="gesture-help">Open palm: stop · Point: voice input · Thumbs up: read latest answer · Fist: stop voice</p>
+				<p class="vision-status" id="vision-status" role="status">Gesture system offline</p>
+			</section>
 			<section class="conversation" id="conversation" aria-label="Chat conversation">
 				<div class="welcome" id="welcome">
-					<span class="welcome-mark" aria-hidden="true">D</span>
-					<h1>What can I help you with?</h1>
-					<p>A private assistant powered by a model running on your own computer. No account or paid API key.</p>
+					<span class="welcome-mark" aria-hidden="true">A</span>
+					<h1>Artifi is ready when you are.</h1>
+					<p>A multimodal AI assistant powered by Google Gemini. Ask by text or voice, or scan a question with the camera.</p>
 					<div class="suggestions" aria-label="Suggested prompts">
+						<button class="suggestion" type="button" data-prompt="Answer this question directly and accurately. If an exact answer is requested, provide only that answer:">Get a direct, exact answer</button>
 						<button class="suggestion" type="button" data-prompt="Explain a difficult idea in simple terms">Explain a difficult idea simply</button>
-						<button class="suggestion" type="button" data-prompt="Help me write a clear, professional email">Help me draft an email</button>
 						<button class="suggestion" type="button" data-prompt="Help me plan a project, step by step">Plan a project</button>
 						<button class="suggestion" type="button" data-prompt="Help me understand and debug this code">Help me debug code</button>
 					</div>
-					<div class="setup-note" id="setup-note" hidden>To start chatting, install Ollama and download a model. In a terminal, run <code>ollama pull qwen2.5:3b</code>, then reload this page.</div>
+					<div class="setup-note" id="setup-note" hidden>Add your Google Gemini API key to start chatting. Create one in Google AI Studio, then select <strong>Add API key</strong> above.</div>
 				</div>
 				<div class="messages" id="messages" aria-live="polite" aria-relevant="additions text"></div>
 			</section>
 			<div class="composer-area">
 				<form class="composer" id="chat-form">
-					<textarea id="prompt" rows="1" maxlength="12000" placeholder="Message your local assistant…" aria-label="Message your local assistant"></textarea>
+					<textarea id="prompt" rows="1" maxlength="12000" placeholder="Ask Artifi anything…" aria-label="Message Artifi"></textarea>
+					<button class="tool-button" id="read-answer" type="button" title="Read the latest answer aloud" aria-label="Read the latest answer aloud">🔊</button>
 					<button class="send" id="send-button" type="submit" aria-label="Send message" title="Send message" disabled>↑</button>
 					<button class="stop" id="stop-button" type="button" aria-label="Stop generating" title="Stop generating" hidden>■</button>
 				</form>
-				<div class="composer-foot"><span>Enter to send · Shift+Enter for a new line</span><span>Runs locally</span></div>
+				<div class="composer-foot"><span>Enter to send · Shift+Enter for a new line</span><span>Google Gemini · API usage may be billed</span></div>
 			</div>
 		</main>
 	</div>
+	<section class="key-modal" id="key-modal" role="dialog" aria-modal="true" aria-labelledby="key-title" hidden>
+		<div class="key-card">
+			<h2 id="key-title"><span class="google-mark" aria-hidden="true">G</span> Configure Google Gemini</h2>
+			<p>Your key is saved in this browser's local storage and sent directly to Google when you chat. Browser storage is not encrypted; use your own trusted device. <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Get an API key in Google AI Studio</a>.</p>
+			<label class="model-label" for="api-key-input">GEMINI API KEY</label>
+			<input class="key-input" id="api-key-input" type="password" autocomplete="off" maxlength="256" placeholder="Paste your Gemini API key">
+			<div class="key-actions">
+				<button class="tool-button" id="clear-api-key" type="button">Clear key</button>
+				<button class="tool-button" id="cancel-api-key" type="button">Cancel</button>
+				<button class="tool-button" id="save-api-key" type="button">Save key</button>
+			</div>
+			<p class="key-status" id="key-status" role="status"></p>
+		</div>
+	</section>
 	<script>
 		const storageKey = "local-ai-conversations-v1";
-		const defaultModel = "qwen2.5:3b";
+		const apiKeyStorageKey = "ARTIFI_GEMINI_KEY";
 		const chatList = document.getElementById("chat-list");
 		const mobileHistory = document.getElementById("mobile-history");
 		const messagesElement = document.getElementById("messages");
 		const welcome = document.getElementById("welcome");
 		const promptInput = document.getElementById("prompt");
-		const modelPicker = document.getElementById("model-picker");
 		const sendButton = document.getElementById("send-button");
 		const stopButton = document.getElementById("stop-button");
 		const localStatus = document.getElementById("local-status");
 		const statusText = document.getElementById("status-text");
 		const setupNote = document.getElementById("setup-note");
+		const apiKeyButton = document.getElementById("api-key-button");
+		const apiKeyLabel = document.getElementById("api-key-label");
+		const keyModal = document.getElementById("key-modal");
+		const apiKeyInput = document.getElementById("api-key-input");
+		const keyStatus = document.getElementById("key-status");
+		const voiceButton = document.getElementById("voice-button");
+		const cameraButton = document.getElementById("camera-button");
+		const visionPanel = document.getElementById("vision-panel");
+		const cameraToggle = document.getElementById("camera-toggle");
+		const scanButton = document.getElementById("scan-question");
+		const cameraVideo = document.getElementById("camera-video");
+		const cameraCanvas = document.getElementById("camera-overlay");
+		const cameraContext = cameraCanvas.getContext("2d");
+		const cameraPlaceholder = document.getElementById("camera-placeholder");
+		const visionStatus = document.getElementById("vision-status");
+		const readAnswerButton = document.getElementById("read-answer");
 		let conversations = loadConversations();
 		let activeId = conversations[0]?.id || null;
-		let modelReady = false;
+		let apiKeyConfigured = false;
 		let generating = false;
 		let abortController = null;
+		let cameraStream = null;
+		let handDetector = null;
+		let cameraFrameId = null;
+		let recognition = null;
+		let listening = false;
+		let lastGesture = "";
+		let ocrWorkerPromise = null;
+		let pendingPrompt = "";
+		const scriptLoads = new Map();
 
 		function loadConversations() {
 			try {
@@ -264,11 +417,11 @@
 				const avatar = document.createElement("span");
 				avatar.className = "message-avatar";
 				avatar.setAttribute("aria-hidden", "true");
-				avatar.textContent = entry.role === "user" ? "Y" : "D";
+				avatar.textContent = entry.role === "user" ? "Y" : "A";
 				const content = document.createElement("div");
 				const name = document.createElement("div");
 				name.className = "message-name";
-				name.textContent = entry.role === "user" ? "You" : "D chart";
+				name.textContent = entry.role === "user" ? "You" : "Artifi";
 				const body = document.createElement("div");
 				body.className = "message-body";
 				body.textContent = entry.content;
@@ -279,7 +432,7 @@
 			if (generating) {
 				const thinking = document.createElement("div");
 				thinking.className = "message";
-				thinking.innerHTML = '<span class="message-avatar" aria-hidden="true">D</span><div><div class="message-name">D chart</div><span class="thinking" role="status">Thinking <i></i><i></i><i></i></span></div>';
+				thinking.innerHTML = '<span class="message-avatar" aria-hidden="true">A</span><div><div class="message-name">Artifi</div><span class="thinking" role="status">Thinking <i></i><i></i><i></i></span></div>';
 				messagesElement.append(thinking);
 			}
 			requestAnimationFrame(() => { document.getElementById("conversation").scrollTop = document.getElementById("conversation").scrollHeight; });
@@ -315,7 +468,12 @@
 
 		async function sendMessage(text) {
 			const content = text.trim();
-			if (!content || !modelReady || generating) return;
+			if (!content || generating) return;
+			if (!apiKeyConfigured) {
+				pendingPrompt = content;
+				openKeyModal();
+				return;
+			}
 			appendMessage("user", content);
 			promptInput.value = "";
 			resizePrompt();
@@ -323,15 +481,24 @@
 			abortController = new AbortController();
 			const chatAtRequest = activeConversation();
 			try {
-				const response = await fetch("/api/chat", {
+				const contents = chatAtRequest.messages
+					.filter(message => !message.error)
+					.slice(-40)
+					.map(({ role, content }) => ({ role: role === "assistant" ? "model" : "user", parts: [{ text: content }] }));
+				const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent", {
 					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ model: modelPicker.value, messages: chatAtRequest.messages.slice(-40).map(({ role, content }) => ({ role, content })) }),
+					headers: { "Content-Type": "application/json", "x-goog-api-key": getApiKey() },
+					body: JSON.stringify({
+						contents,
+						systemInstruction: { parts: [{ text: "You are Artifi, a helpful and accurate assistant. Answer clearly and directly. If the user asks for an exact answer, give only that answer without extra explanation. Do not guess: state uncertainty or ask for needed context. Do not assist with requests that would enable serious harm." }] }
+					}),
 					signal: abortController.signal
 				});
 				const result = await response.json().catch(() => ({}));
-				if (!response.ok) throw new Error(result.error || "The local model could not answer. Try again.");
-				if (activeId === chatAtRequest.id) appendMessage("assistant", result.reply);
+				if (!response.ok) throw new Error(result.error?.message || `Gemini could not answer (${response.status}). Check your API key and Google AI Studio usage limits.`);
+				const answer = result.candidates?.[0]?.content?.parts?.map(part => part.text || "").join("").trim();
+				if (!answer) throw new Error("Gemini returned no text. Try asking again.");
+				if (activeId === chatAtRequest.id) appendMessage("assistant", answer);
 			} catch (error) {
 				if (error.name !== "AbortError" && activeId === chatAtRequest.id) appendMessage("assistant", error.message, { error: true });
 			} finally {
@@ -344,43 +511,35 @@
 		function resizePrompt() {
 			promptInput.style.height = "auto";
 			promptInput.style.height = `${Math.min(promptInput.scrollHeight, 180)}px`;
-			sendButton.disabled = !modelReady || !promptInput.value.trim();
+			sendButton.disabled = !apiKeyConfigured || !promptInput.value.trim();
 		}
 
-		async function checkModels() {
+		function getApiKey() {
 			try {
-				const response = await fetch("/api/status");
-				const result = await response.json();
-				modelPicker.replaceChildren();
-				if (!result.available || !result.models?.length) {
-					const option = document.createElement("option");
-					option.textContent = "No local model found";
-					modelPicker.append(option);
-					modelPicker.disabled = true;
-					modelReady = false;
-					setupNote.hidden = false;
-					setStatus(result.available ? "Ollama ready · install a model" : "Ollama not running", "error");
-				} else {
-					for (const model of result.models) {
-						const option = document.createElement("option");
-						option.value = model;
-						option.textContent = model;
-						modelPicker.append(option);
-					}
-					modelPicker.value = result.models.includes(result.defaultModel) ? result.defaultModel : result.models[0];
-					modelPicker.disabled = false;
-					modelReady = true;
-					setupNote.hidden = true;
-					setStatus("Local model ready", "ready");
-				}
-			} catch {
-				modelReady = false;
-				modelPicker.replaceChildren(new Option("Local server unavailable", ""));
-				modelPicker.disabled = true;
-				setupNote.hidden = false;
-				setStatus("Local server unavailable", "error");
+				return localStorage.getItem(apiKeyStorageKey) || "";
+			} catch (error) {
+				setStatus("Browser storage unavailable", "error");
+				throw new Error("Browser storage is unavailable. Enable local storage to save your Gemini API key.");
 			}
+		}
+
+		function updateApiKeyUI() {
+			try {
+				apiKeyConfigured = !!getApiKey();
+			} catch {
+				apiKeyConfigured = false;
+			}
+			apiKeyLabel.textContent = apiKeyConfigured ? "API key saved" : "Add API key";
+			setupNote.hidden = apiKeyConfigured;
+			setStatus(apiKeyConfigured ? "Gemini API key ready" : "Gemini API key required", apiKeyConfigured ? "ready" : "error");
 			resizePrompt();
+		}
+
+		function openKeyModal() {
+			keyStatus.textContent = "";
+			keyModal.hidden = false;
+			apiKeyInput.value = "";
+			apiKeyInput.focus();
 		}
 
 		function handleHistoryClick(event) {
@@ -423,9 +582,292 @@
 			resizePrompt();
 			promptInput.focus();
 		}));
-		modelPicker.addEventListener("change", () => { sendButton.disabled = !modelReady || !promptInput.value.trim(); });
+		cameraButton.addEventListener("click", () => {
+			visionPanel.hidden = !visionPanel.hidden;
+		});
+		document.getElementById("close-vision").addEventListener("click", () => { visionPanel.hidden = true; });
+		cameraToggle.addEventListener("click", () => {
+			if (cameraStream) stopCamera();
+			else void startCamera();
+		});
+		scanButton.addEventListener("click", () => { void scanQuestion(); });
+		voiceButton.addEventListener("click", toggleListening);
+		readAnswerButton.addEventListener("click", readLatestAnswer);
 		render();
-		void checkModels();
+		updateApiKeyUI();
+		apiKeyButton.addEventListener("click", openKeyModal);
+		document.getElementById("cancel-api-key").addEventListener("click", () => { keyModal.hidden = true; });
+		document.getElementById("save-api-key").addEventListener("click", () => {
+			const key = apiKeyInput.value.trim();
+			if (!key) {
+				keyStatus.textContent = "Paste your Gemini API key before saving.";
+				return;
+			}
+			try {
+				localStorage.setItem(apiKeyStorageKey, key);
+				keyModal.hidden = true;
+				updateApiKeyUI();
+				const queuedPrompt = pendingPrompt;
+				pendingPrompt = "";
+				if (queuedPrompt) void sendMessage(queuedPrompt);
+			} catch (error) {
+				keyStatus.textContent = `Could not save the key: ${error.message}`;
+			}
+		});
+		document.getElementById("clear-api-key").addEventListener("click", () => {
+			try {
+				localStorage.removeItem(apiKeyStorageKey);
+				keyModal.hidden = true;
+				updateApiKeyUI();
+			} catch (error) {
+				keyStatus.textContent = `Could not clear the key: ${error.message}`;
+			}
+		});
+		keyModal.addEventListener("click", event => { if (event.target === keyModal) keyModal.hidden = true; });
+		document.addEventListener("keydown", event => { if (event.key === "Escape" && !keyModal.hidden) keyModal.hidden = true; });
+
+		function setVisionStatus(message) {
+			visionStatus.textContent = message;
+		}
+
+		function loadScript(src, globalName) {
+			if (window[globalName]) return Promise.resolve(window[globalName]);
+			if (scriptLoads.has(src)) return scriptLoads.get(src);
+			const loading = new Promise((resolve, reject) => {
+				const script = document.createElement("script");
+				script.src = src;
+				script.async = true;
+				script.crossOrigin = "anonymous";
+				script.onload = () => window[globalName] ? resolve(window[globalName]) : reject(new Error(`${globalName} did not initialize.`));
+				script.onerror = () => reject(new Error(`Could not load ${globalName}. Check your internet connection and try again.`));
+				document.head.append(script);
+			}).catch(error => {
+				scriptLoads.delete(src);
+				throw error;
+			});
+			scriptLoads.set(src, loading);
+			return loading;
+		}
+
+		function setupSpeechRecognition() {
+			const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+			if (!SpeechRecognition) {
+				voiceButton.disabled = true;
+				voiceButton.title = "Speech recognition is not supported by this browser.";
+				return;
+			}
+			recognition = new SpeechRecognition();
+			recognition.lang = "en-US";
+			recognition.continuous = false;
+			recognition.interimResults = false;
+			recognition.onstart = () => {
+				listening = true;
+				voiceButton.setAttribute("aria-pressed", "true");
+				voiceButton.textContent = "Listening…";
+				setVisionStatus("Listening for your question");
+			};
+			recognition.onresult = event => {
+				const transcript = event.results[0][0].transcript.trim();
+				promptInput.value = transcript;
+				resizePrompt();
+				void sendMessage(transcript);
+			};
+			recognition.onerror = event => {
+				if (event.error !== "no-speech" && event.error !== "aborted") setVisionStatus(`Voice input error: ${event.error}`);
+			};
+			recognition.onend = () => {
+				listening = false;
+				voiceButton.setAttribute("aria-pressed", "false");
+				voiceButton.textContent = "🎙 Voice";
+			};
+		}
+
+		function toggleListening() {
+			if (!recognition) setupSpeechRecognition();
+			if (!recognition) {
+				setVisionStatus("Speech recognition is not supported by this browser.");
+				return;
+			}
+			if (listening) recognition.stop();
+			else {
+				try { recognition.start(); }
+				catch (error) { setVisionStatus(`Could not start voice input: ${error.message}`); }
+			}
+		}
+
+		function readLatestAnswer() {
+			if (!("speechSynthesis" in window)) {
+				setVisionStatus("Speech output is not supported by this browser.");
+				return;
+			}
+			const chat = activeConversation();
+			const answer = chat?.messages.slice().reverse().find(message => message.role === "assistant" && !message.error)?.content;
+			if (!answer) {
+				setVisionStatus("There is no answer to read yet.");
+				return;
+			}
+			window.speechSynthesis.cancel();
+			window.speechSynthesis.speak(new SpeechSynthesisUtterance(answer));
+			setVisionStatus("Reading the latest answer aloud");
+		}
+
+		function stopSpeech() {
+			if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+		}
+
+		async function startCamera() {
+			if (!navigator.mediaDevices?.getUserMedia) {
+				setVisionStatus("Camera access requires a supported browser on HTTPS or localhost.");
+				return;
+			}
+			try {
+				setVisionStatus("Requesting camera permission…");
+				await Promise.all([
+					loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js", "Hands"),
+					loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js", "Camera")
+				]);
+				cameraStream = await navigator.mediaDevices.getUserMedia({
+					audio: false,
+					video: { facingMode: { ideal: "environment" }, width: { ideal: 960 }, height: { ideal: 720 } }
+				});
+				cameraVideo.srcObject = cameraStream;
+				await cameraVideo.play();
+				cameraPlaceholder.hidden = true;
+				cameraToggle.textContent = "Stop camera";
+				cameraButton.setAttribute("aria-pressed", "true");
+				scanButton.disabled = false;
+
+				handDetector = new Hands({ locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+				handDetector.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.65, minTrackingConfidence: 0.6 });
+				handDetector.onResults(drawHandResults);
+				setVisionStatus("Camera active · hand tracking ready");
+				void processCameraFrame();
+			} catch (error) {
+				stopCamera();
+				setVisionStatus(`Could not start the camera: ${error.message}`);
+			}
+		}
+
+		async function processCameraFrame() {
+			if (!cameraStream || !handDetector) return;
+			try {
+				await handDetector.send({ image: cameraVideo });
+				cameraFrameId = requestAnimationFrame(() => { void processCameraFrame(); });
+			} catch (error) {
+				setVisionStatus(`Hand tracking stopped: ${error.message}`);
+				stopCamera();
+			}
+		}
+
+		function stopCamera() {
+			if (cameraFrameId !== null) cancelAnimationFrame(cameraFrameId);
+			cameraFrameId = null;
+			if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+			cameraStream = null;
+			cameraVideo.srcObject = null;
+			if (handDetector) void handDetector.close();
+			handDetector = null;
+			cameraContext.clearRect(0, 0, cameraCanvas.width, cameraCanvas.height);
+			cameraPlaceholder.hidden = false;
+			cameraToggle.textContent = "Start camera";
+			cameraButton.setAttribute("aria-pressed", "false");
+			scanButton.disabled = true;
+			lastGesture = "";
+			setVisionStatus("Gesture system offline");
+		}
+
+		function drawHandResults(results) {
+			const width = cameraVideo.videoWidth || 640;
+			const height = cameraVideo.videoHeight || 480;
+			if (cameraCanvas.width !== width || cameraCanvas.height !== height) {
+				cameraCanvas.width = width;
+				cameraCanvas.height = height;
+			}
+			cameraContext.clearRect(0, 0, width, height);
+			const landmarks = results.multiHandLandmarks?.[0];
+			if (!landmarks) {
+				lastGesture = "";
+				return;
+			}
+			cameraContext.strokeStyle = "#ff2ca8";
+			cameraContext.lineWidth = 3;
+			for (const [start, end] of HAND_CONNECTIONS) {
+				cameraContext.beginPath();
+				cameraContext.moveTo(landmarks[start].x * width, landmarks[start].y * height);
+				cameraContext.lineTo(landmarks[end].x * width, landmarks[end].y * height);
+				cameraContext.stroke();
+			}
+			for (const point of landmarks) {
+				cameraContext.beginPath();
+				cameraContext.arc(point.x * width, point.y * height, 4, 0, Math.PI * 2);
+				cameraContext.fillStyle = "#00efff";
+				cameraContext.fill();
+			}
+			handleGesture(landmarks);
+		}
+
+		function handleGesture(points) {
+			const extended = [8, 12, 16, 20].map((tip, index) => points[tip].y < points[[6, 10, 14, 18][index]].y);
+			const thumbUp = points[4].y < points[3].y && !extended.some(Boolean);
+			let gesture = "";
+			if (extended.every(Boolean)) gesture = "Open palm";
+			else if (!extended.some(Boolean) && thumbUp) gesture = "Thumbs up";
+			else if (!extended.some(Boolean)) gesture = "Fist";
+			else if (extended[0] && !extended.slice(1).some(Boolean)) gesture = "Point";
+			if (!gesture || gesture === lastGesture) return;
+			lastGesture = gesture;
+			setVisionStatus(`Gesture recognized: ${gesture}`);
+			if (gesture === "Open palm") {
+				stopSpeech();
+				abortController?.abort();
+				if (listening) recognition.stop();
+			} else if (gesture === "Point") {
+				toggleListening();
+			} else if (gesture === "Thumbs up") {
+				readLatestAnswer();
+			} else if (gesture === "Fist") {
+				stopSpeech();
+			}
+		}
+
+		async function scanQuestion() {
+			if (!cameraStream || !cameraVideo.videoWidth) return;
+			scanButton.disabled = true;
+			setVisionStatus("Scanning text in the camera frame…");
+			try {
+				await loadScript("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js", "Tesseract");
+				if (!ocrWorkerPromise) {
+					ocrWorkerPromise = Tesseract.createWorker("eng", 1, {
+						workerPath: "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js",
+						corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core.wasm.js",
+						langPath: "https://tessdata.projectnaptha.com/4.0.0",
+						logger: progress => {
+							if (progress.status === "recognizing text") setVisionStatus(`Reading question… ${Math.round(progress.progress * 100)}%`);
+						}
+					});
+				}
+				const worker = await ocrWorkerPromise;
+				const { data } = await worker.recognize(cameraVideo);
+				const question = data.text.trim().slice(0, 11000);
+				if (!question) throw new Error("No readable text found. Move closer and try again.");
+				promptInput.value = question;
+				resizePrompt();
+				visionPanel.hidden = true;
+				setVisionStatus("Question scanned · asking Gemini");
+				void sendMessage(`Answer this scanned question accurately and directly. If it asks for an exact answer, provide only that answer. If any part is unreadable, say what needs clarification.\n\n${question}`);
+			} catch (error) {
+				ocrWorkerPromise = null;
+				setVisionStatus(`Question scan failed: ${error.message}`);
+			} finally {
+				scanButton.disabled = !cameraStream;
+			}
+		}
+
+		setupSpeechRecognition();
+		window.addEventListener("pagehide", () => {
+			stopCamera();
+			if (ocrWorkerPromise) void ocrWorkerPromise.then(worker => worker.terminate()).catch(() => {});
+		}, { once: true });
 	</script>
 </body>
 </html>
