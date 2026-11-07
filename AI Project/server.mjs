@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const defaultModel = "qwen2.5:3b";
-const systemPrompt = "You are a helpful, honest assistant. Explain clearly, ask questions when context is missing, and acknowledge uncertainty. Do not assist with requests that would enable serious harm. Respect privacy and never claim to have performed actions you did not perform.";
+const systemPrompt = "You are Artifi, a helpful, honest assistant. Answer questions accurately and directly. When the user requests an exact answer, provide only the answer without extra explanation. If information is missing or uncertain, say so and ask for clarification rather than guessing. Do not assist with requests that would enable serious harm. Respect privacy and never claim to have performed actions you did not perform.";
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -45,7 +45,7 @@ export function createAppServer({ ollamaUrl = "http://127.0.0.1:11434", model = 
   return createHttpServer(async (request, response) => {
     response.setHeader("X-Content-Type-Options", "nosniff");
     response.setHeader("Referrer-Policy", "no-referrer");
-    response.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
+    response.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://generativelanguage.googleapis.com https://cdn.jsdelivr.net https://tessdata.projectnaptha.com; img-src 'self' data: blob:; media-src 'self' blob:; worker-src 'self' blob: https://cdn.jsdelivr.net; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
     try {
       if (request.method !== "GET" && request.headers.origin) {
         const host = request.headers.host || "";
@@ -53,8 +53,16 @@ export function createAppServer({ ollamaUrl = "http://127.0.0.1:11434", model = 
         if (!localHost || request.headers.origin !== `http://${host}`) throw new HttpError(403, "Cross-origin requests are not allowed.");
       }
       const url = new URL(request.url, "http://localhost");
+      if (url.pathname === "/artifi.html") {
+        response.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://generativelanguage.googleapis.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; media-src 'self' blob:; worker-src 'self' blob:; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
+      }
       if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/index.html")) {
         const html = await readFile(resolve(root, "index.html"));
+        response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+        return response.end(html);
+      }
+      if (request.method === "GET" && url.pathname === "/artifi.html") {
+        const html = await readFile(resolve(root, "artifi.html"));
         response.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
         return response.end(html);
       }
@@ -81,7 +89,8 @@ export function createAppServer({ ollamaUrl = "http://127.0.0.1:11434", model = 
           return { role: message.role, content: message.content };
         });
         if (messages.at(-1).role !== "user") throw new HttpError(400, "The latest message must be from you.");
-        const selectedModel = typeof body.model === "string" && body.model.length <= 120 ? body.model : model;
+        const rawModel = typeof body.model === "string" ? body.model.trim() : "";
+        const selectedModel = rawModel && rawModel.length <= 120 ? rawModel : model;
         const upstream = await fetch(`${baseUrl}/api/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -107,5 +116,5 @@ export function createAppServer({ ollamaUrl = "http://127.0.0.1:11434", model = 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT || 4174);
   const server = createAppServer({ model: process.env.OLLAMA_MODEL || defaultModel });
-  server.listen(port, "127.0.0.1", () => console.log(`D chart is ready at http://127.0.0.1:${port}`));
+  server.listen(port, process.env.HOST || "127.0.0.1", () => console.log(`Artifi is ready at http://${process.env.HOST || "127.0.0.1"}:${port}`));
 }

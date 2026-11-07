@@ -28,7 +28,17 @@ test("serves the chat UI and reports installed local models", async t => {
 
   const page = await fetch(appUrl);
   assert.equal(page.status, 200);
-  assert.match(await page.text(), /D chart/);
+  const html = await page.text();
+  assert.match(html, /Artifi is ready/);
+  assert.match(html, /Google Gemini/);
+  assert.match(html, /gemini-3\.6-flash:generateContent/);
+  assert.match(page.headers.get("content-security-policy"), /generativelanguage\.googleapis\.com/);
+
+  const artifiPage = await fetch(`${appUrl}/artifi.html`);
+  assert.equal(artifiPage.status, 200);
+  const artifiHtml = await artifiPage.text();
+  assert.match(artifiHtml, /ARTIFI/);
+  assert.match(artifiHtml, /gemini-3\.6-flash:generateContent/);
 
   const status = await fetch(`${appUrl}/api/status`);
   assert.deepEqual(await status.json(), { available: true, models: ["qwen2.5:3b"], defaultModel: "qwen2.5:3b" });
@@ -62,6 +72,7 @@ test("relays valid chat locally and rejects unsupported roles", async t => {
   assert.equal((await response.json()).reply, "Hello from the local model.");
   assert.equal(receivedMessages[0].role, "system");
   assert.match(receivedMessages[0].content, /helpful, honest assistant/);
+  assert.match(receivedMessages[0].content, /exact answer/);
 
   const invalid = await fetch(`${appUrl}/api/chat`, {
     method: "POST",
