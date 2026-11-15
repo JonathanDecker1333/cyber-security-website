@@ -30,7 +30,7 @@ The PostgreSQL migrations create the schema but do not copy existing local SQLit
 
 ## Promotions
 
-The first five unique buyers can claim free delivery on one order each. Online-payment claims are held for 30 minutes while checkout is pending; a provider setup failure or expired payment releases the slot. Cash-on-delivery claims are recorded with the order. The first ten vendors that an admin approves receive a persistent 5% commission rate; subsequent vendors use the active admin-configured rate. Admin and vendor pages display the assigned rate.
+The first five unique buyers can claim free delivery on one order each. Online-payment claims are held for 30 minutes while checkout is pending; a provider setup failure or expired payment releases the slot. Cash-on-delivery claims are recorded with the order. The platform commission is 5% by default and the same active admin-configured rate applies to every vendor sale.
 
 ## GitHub Pages frontend
 

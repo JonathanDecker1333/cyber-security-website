@@ -49,18 +49,21 @@ test("seller approval, order split, balance, payout, and admin settings",{timeou
   assert.match(vendor2.setCookie,/SameSite=None/);assert.match(vendor2.setCookie,/Secure/);
   const vendorId2=(await api("/api/admin/vendors",{cookie:admin.cookie})).data.vendors.find(item=>item.email==="vendor2@example.org").id;
   await api(`/api/admin/vendors/${vendorId2}`,{method:"PATCH",cookie:admin.cookie,body:{status:"approved"}});
-  const initialVendorPromos=(await api("/api/admin/vendors",{cookie:admin.cookie})).data.vendors.filter(item=>item.promoSlot);assert.equal(initialVendorPromos.length,2);assert.deepEqual(initialVendorPromos.map(item=>item.promoSlot).sort(),[1,2]);
+  const initialVendorPromos=(await api("/api/admin/vendors",{cookie:admin.cookie})).data.vendors.filter(item=>item.promoSlot);assert.equal(initialVendorPromos.length,0);
   let eleventhVendor;
   for(let index=3;index<=11;index++){
     const signup=await api("/api/auth/register",{method:"POST",body:{role:"vendor",displayName:`Seller ${index}`,storeName:`Shop ${index}`,email:`seller${index}@example.org`,phone:`+232 77 200 ${String(index).padStart(3,"0")}`,password:"AdditionalVendorPassword2026!"}});
     const id=signup.data.user.id;await api(`/api/admin/vendors/${id}`,{method:"PATCH",cookie:admin.cookie,body:{status:"approved"}});if(index===11)eleventhVendor=signup;
   }
-  const allVendors=(await api("/api/admin/vendors",{cookie:admin.cookie})).data.vendors;assert.equal(allVendors.filter(item=>item.promoSlot).length,10);assert.equal(allVendors.find(item=>item.email==="seller11@example.org").feePercent,null);
+  const allVendors=(await api("/api/admin/vendors",{cookie:admin.cookie})).data.vendors;assert.equal(allVendors.length,11);assert.ok(allVendors.every(item=>!Object.hasOwn(item,"promoSlot")&&!Object.hasOwn(item,"feePercent")));
+  const eleventhSummary=await api("/api/vendor/summary",{cookie:eleventhVendor.cookie});assert.equal(eleventhSummary.data.commissionPercent,5);
   const product2=await api("/api/vendor/products",{method:"POST",cookie:vendor2.cookie,body:{title:"Local cacao",description:"Small batch",category:"Food",price:100,currency:"SLE",stock:5}});assert.equal(product2.status,201);
+  const product11=await api("/api/vendor/products",{method:"POST",cookie:eleventhVendor.cookie,body:{title:"Salone spice box",description:"Locally packed spices",category:"Food",price:100,currency:"SLE",stock:5}});assert.equal(product11.status,201);
   const usdProduct=await api("/api/vendor/products",{method:"POST",cookie:vendor2.cookie,body:{title:"Cacao gift set",description:"A gift from Salone",category:"Food",price:20,currency:"USD",stock:8}});assert.equal(usdProduct.status,201);
   const buyer=await api("/api/auth/register",{method:"POST",body:{role:"customer",displayName:"Test Buyer",email:"buyer@example.org",phone:"+232 78 123 456",password:"BuyerPassword2026!"}});
   const order=await api("/api/orders",{method:"POST",cookie:buyer.cookie,body:{name:"Test Buyer",email:"buyer@example.org",phone:"+232 76 000 000",address:"12 Wilkinson Road",city:"Freetown",paymentMethod:"cash_on_delivery",items:[{productId:product.data.product.id,quantity:1},{productId:product2.data.product.id,quantity:1}]}});
   assert.equal(order.status,201);assert.equal(order.data.order.gross,600);assert.equal(order.data.order.commission,30);assert.equal(order.data.order.vendorNet,570);assert.equal(order.data.order.freeDelivery,true);
+  const laterVendorOrder=await api("/api/orders",{method:"POST",cookie:buyer.cookie,body:{name:"Test Buyer",email:"buyer@example.org",phone:"+232 76 000 000",address:"12 Wilkinson Road",city:"Freetown",paymentMethod:"cash_on_delivery",items:[{productId:product11.data.product.id,quantity:1}]}});assert.equal(laterVendorOrder.status,201);assert.equal(laterVendorOrder.data.order.commission,5);assert.equal(laterVendorOrder.data.order.vendorNet,95);
   for(let index=2;index<=5;index++){
     const extraBuyer=await api("/api/auth/register",{method:"POST",body:{role:"buyer",displayName:`Buyer ${index}`,email:`buyer${index}@example.org`,phone:`+232 78 300 ${String(index).padStart(3,"0")}`,password:"ExtraBuyerPassword2026!"}});
     const extraOrder=await api("/api/orders",{method:"POST",cookie:extraBuyer.cookie,body:{name:`Buyer ${index}`,email:`buyer${index}@example.org`,phone:`+232 78 300 ${String(index).padStart(3,"0")}`,address:"Market Street",city:"Bo",paymentMethod:"cash_on_delivery",items:[{productId:usdProduct.data.product.id,quantity:1}]}});assert.equal(extraOrder.data.order.freeDelivery,true);

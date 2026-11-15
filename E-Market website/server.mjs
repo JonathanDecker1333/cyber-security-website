@@ -80,11 +80,12 @@ async function createOrder(user, input) {
   if (!Array.isArray(input.items) || !input.items.length || input.items.length > 40) fail(400, "Your cart is empty or too large.");
   const quantities = new Map();
   for (const item of input.items) { if (!item || typeof item.productId !== "string" || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 99) fail(400, "Invalid cart item."); quantities.set(item.productId, (quantities.get(item.productId) || 0) + item.quantity); }
+  const commissionPercent = await fee();
   const items = [];
   for (const [id, quantity] of quantities) {
-    const product = await db.prepare("SELECT p.*,u.store_name,u.fee_percent FROM products p JOIN users u ON u.id=p.vendor_id WHERE p.id=? AND p.active=1 AND u.status='approved'").get(id);
+    const product = await db.prepare("SELECT p.*,u.store_name FROM products p JOIN users u ON u.id=p.vendor_id WHERE p.id=? AND p.active=1 AND u.status='approved'").get(id);
     if (!product || product.stock < quantity) fail(409, "A product is unavailable or has insufficient stock.");
-    items.push({ product, quantity, ...calculateCommission(product.price * quantity, product.fee_percent ?? await fee()) });
+    items.push({ product, quantity, ...calculateCommission(product.price * quantity, commissionPercent) });
   }
   if (new Set(items.map(item => item.product.currency)).size !== 1) fail(400, "Checkout items must use the same currency.");
   const currency = items[0].product.currency, gross = items.reduce((sum, item) => sum + item.gross, 0), commission = items.reduce((sum, item) => sum + item.commission, 0), net = items.reduce((sum, item) => sum + item.vendorNet, 0);
@@ -136,14 +137,13 @@ async function route(req, res) {
     res.writeHead(204,{"Access-Control-Allow-Methods":"GET, POST, PATCH, OPTIONS","Access-Control-Allow-Headers":"Content-Type","Access-Control-Max-Age":"600"});return res.end();
   }
   if (req.method === "GET" && path === "/api/store") {
-    const [products, vendors, delivery, vendorCount, commissionPercent] = await Promise.all([
+    const [products, vendors, delivery, commissionPercent] = await Promise.all([
       db.prepare("SELECT p.*,u.store_name FROM products p JOIN users u ON u.id=p.vendor_id WHERE p.active=1 AND p.stock>0 AND u.status='approved' ORDER BY p.created_at DESC").all(),
       db.prepare("SELECT u.id,u.store_name AS name,u.display_name AS displayName,COUNT(p.id) products FROM users u JOIN products p ON p.vendor_id=u.id AND p.active=1 WHERE u.role='vendor' AND u.status='approved' GROUP BY u.id ORDER BY products DESC LIMIT 6").all(),
       db.prepare("SELECT COUNT(*) count FROM delivery_promotions WHERE status='redeemed' OR claimed_at>?").get(Date.now()-30*60*1000),
-      db.prepare("SELECT COUNT(*) count FROM vendor_promotions").get(),
       fee(),
     ]);
-    return json(res, 200, { products: products.map(productView), vendors, commissionPercent, promotions:{freeDeliveryRemaining:Math.max(0,5-delivery.count),vendorCommissionRemaining:Math.max(0,10-vendorCount.count)} });
+    return json(res, 200, { products: products.map(productView), vendors, commissionPercent, promotions:{freeDeliveryRemaining:Math.max(0,5-delivery.count)} });
   }
   if (path.startsWith("/api/") && req.method !== "GET" && path !== "/api/flutterwave/webhook") sameOrigin(req);
   if (req.method === "POST" && path === "/api/contact") {
@@ -210,17 +210,15 @@ async function route(req, res) {
   const user=await userFor(req,res);
   if(req.method==="GET"&&path==="/api/vendor/summary") {
     role(user,"vendor");
-    const [products, orderRows, payouts, vendorDetails] = await Promise.all([
+    const [products, orderRows, payouts] = await Promise.all([
       db.prepare("SELECT * FROM products WHERE vendor_id=? AND active=1 ORDER BY created_at DESC").all(user.id),
       db.prepare("SELECT DISTINCT o.* FROM orders o JOIN order_items i ON i.order_id=o.id WHERE i.vendor_id=? ORDER BY o.created_at DESC").all(user.id),
       db.prepare("SELECT id,amount,currency,method,destination,status,created_at AS createdAt FROM payouts WHERE vendor_id=? ORDER BY created_at DESC").all(user.id),
-      db.prepare("SELECT fee_percent FROM users WHERE id=?").get(user.id),
     ]);
     const orders=await Promise.all(orderRows.map(order=>orderView(order,user.id)));
     const currencies=[...new Set([...products.map(x=>x.currency),...orders.map(x=>x.currency),...payouts.map(x=>x.currency)])];
-    const vendorFee=vendorDetails.fee_percent;
     const balances=await Promise.all(currencies.map(async currency=>[currency,await balance(user.id,currency)]));
-    return json(res,200,{products:products.map(productView),orders,payouts,balances:Object.fromEntries(balances),commissionPercent:vendorFee??await fee(),promoRate:vendorFee===5});
+    return json(res,200,{products:products.map(productView),orders,payouts,balances:Object.fromEntries(balances),commissionPercent:await fee()});
   }
   if(req.method==="POST"&&path==="/api/vendor/products") {
     role(user,"vendor"); const x=await body(req),price=Number(x.price),stock=Number(x.stock);
@@ -265,27 +263,20 @@ async function route(req, res) {
     ]);
     return json(res,200,{stats:{sales,gross:sales.map(sale=>({currency:sale.currency,amount:sale.gross})),commission:sales.map(sale=>({currency:sale.currency,amount:sale.commission})),vendors:vendors.count,pendingVendors:pendingVendors.count,pendingPayouts:pendingPayouts.count}});
   }
-  if(req.method==="GET"&&path==="/api/admin/vendors") { role(user,"admin"); return json(res,200,{vendors:await db.prepare("SELECT u.id,u.email,u.display_name AS displayName,u.store_name AS storeName,u.status,u.created_at AS createdAt,u.fee_percent AS feePercent,vp.slot AS promoSlot FROM users u LEFT JOIN vendor_promotions vp ON vp.user_id=u.id WHERE u.role='vendor' ORDER BY u.created_at DESC").all()}); }
+  if(req.method==="GET"&&path==="/api/admin/vendors") { role(user,"admin"); return json(res,200,{vendors:await db.prepare("SELECT id,email,display_name AS displayName,store_name AS storeName,status,created_at AS createdAt FROM users WHERE role='vendor' ORDER BY created_at DESC").all()}); }
   if(req.method==="GET"&&path==="/api/admin/messages") { role(user,"admin"); return json(res,200,{messages:await db.prepare("SELECT id,name,email,topic,message,status,created_at AS createdAt FROM contact_messages ORDER BY CASE status WHEN 'new' THEN 0 ELSE 1 END,created_at DESC").all()}); }
   const adminMessage=path.match(/^\/api\/admin\/messages\/([\w-]+)$/);
   if(req.method==="PATCH"&&adminMessage) { role(user,"admin"); const status=(await body(req)).status; if(!new Set(["new","read"]).has(status)) fail(400,"Choose a valid message status."); if(!(await db.prepare("UPDATE contact_messages SET status=? WHERE id=?").run(status,adminMessage[1])).changes) fail(404,"Message not found."); return json(res,200,{ok:true}); }
   const adminVendor=path.match(/^\/api\/admin\/vendors\/([\w-]+)$/);
   if(req.method==="PATCH"&&adminVendor) {
     role(user,"admin"); const status=(await body(req)).status; if(!new Set(["approved","rejected"]).has(status)) fail(400,"Choose approve or reject.");
-    const vendor=await db.prepare("SELECT id,status,fee_percent FROM users WHERE id=? AND role='vendor'").get(adminVendor[1]);if(!vendor)fail(404,"Seller application not found.");
-    let vendorFee=vendor.fee_percent;
+    const vendor=await db.prepare("SELECT id FROM users WHERE id=? AND role='vendor'").get(adminVendor[1]);if(!vendor)fail(404,"Seller application not found.");
     await db.transaction(async tx => {
-      if (db.dialect === "postgres") await tx.exec("SELECT pg_advisory_xact_lock(hashtext('e-market-order-reservations'))");
-      const current=await tx.prepare("SELECT id,status,fee_percent FROM users WHERE id=? AND role='vendor'").get(vendor.id);
+      const current=await tx.prepare("SELECT id FROM users WHERE id=? AND role='vendor'").get(vendor.id);
       if(!current)fail(404,"Seller application not found.");
-      vendorFee=current.fee_percent;
-      if(status==="approved"&&current.status!=="approved"&&!await tx.prepare("SELECT 1 FROM vendor_promotions WHERE user_id=?").get(vendor.id)){
-        const slot=(await tx.prepare("SELECT COUNT(*) count FROM vendor_promotions").get()).count+1;
-        if(slot<=10){await tx.prepare("INSERT INTO vendor_promotions(user_id,slot) VALUES(?,?)").run(vendor.id,slot);vendorFee=5;}
-      }
-      await tx.prepare("UPDATE users SET status=?,fee_percent=? WHERE id=?").run(status,vendorFee,vendor.id);
+      await tx.prepare("UPDATE users SET status=? WHERE id=?").run(status,vendor.id);
     });
-    return json(res,200,{ok:true,feePercent:status==="approved"?(vendorFee??await fee()):null,promoRate:vendorFee===5});
+    return json(res,200,{ok:true,feePercent:status==="approved"?await fee():null});
   }
   if(req.method==="GET"&&path==="/api/admin/payouts") {
     role(user,"admin"); return json(res,200,{payouts:await db.prepare("SELECT p.id,p.amount,p.currency,p.method,p.destination,p.status,p.created_at AS createdAt,u.store_name AS storeName,u.email FROM payouts p JOIN users u ON u.id=p.vendor_id ORDER BY p.created_at DESC").all()});
